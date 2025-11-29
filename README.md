@@ -1,4 +1,4 @@
-# toastlabplus
+# Toastlabplus :  the most powerful officer tool
 # 目的
 我希望能建立一個幫助Toastmaster Club officer/member/guests的linebot以及Officer app管理後台
 APP
@@ -11,5 +11,4 @@ APP
 2. 於會議前主動通知有
 
 ## 系統條件
-
 我期望line bot跟app後端服務可以架設在雲端服務上(GCP or Azure)
