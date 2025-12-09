@@ -1,0 +1,171 @@
+name: Deploy to GCP
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  PROJECT_ID: toastlabplus
+  GAR_LOCATION: asia-east1
+  GAR_REPOSITORY: toastlabplus-repo
+  CLOUD_RUN_REGION: asia-east1
+  # Secret Manager 中的 Secret 名稱
+  GEMINI_API_KEY_SECRET: GEMINI_API_KEY
+  DB_PASSWORD_SECRET: DB_PASSWORD
+
+jobs:
+  # ============================================
+  # Build and Push MCP Server (Spring Boot)
+  # ============================================
+  build-mcp-server:
+    name: Build MCP Server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+
+      - name: Build with Gradle
+        working-directory: ./mcp-server
+        run: ./gradlew build -x test
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev
+
+      - name: Build and Push Docker Image
+        working-directory: ./mcp-server
+        run: |
+          docker build -t ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/mcp-server:${{ github.sha }} .
+          docker push ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/mcp-server:${{ github.sha }}
+
+  # ============================================
+  # Build and Push Chat Backend (Python)
+  # ============================================
+  build-chat-backend:
+    name: Build Chat Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev
+
+      - name: Build and Push Docker Image
+        working-directory: ./chat-backend
+        run: |
+          docker build -t ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/chat-backend:${{ github.sha }} .
+          docker push ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/chat-backend:${{ github.sha }}
+
+  # ============================================
+  # Deploy to Staging
+  # ============================================
+  deploy-staging:
+    name: Deploy to Staging
+    needs: [build-mcp-server, build-chat-backend]
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy MCP Server to Cloud Run
+        run: |
+          gcloud run deploy mcp-server-staging \
+            --image=${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/mcp-server:${{ github.sha }} \
+            --region=${{ env.CLOUD_RUN_REGION }} \
+            --cpu=0.5 \
+            --memory=512Mi \
+            --min-instances=0 \
+            --max-instances=3 \
+            --set-secrets="DB_PASSWORD=${{ env.DB_PASSWORD_SECRET }}:latest" \
+            --set-env-vars="SPRING_PROFILES_ACTIVE=staging" \
+            --allow-unauthenticated
+
+      - name: Deploy Chat Backend to Cloud Run
+        run: |
+          gcloud run deploy chat-backend-staging \
+            --image=${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/chat-backend:${{ github.sha }} \
+            --region=${{ env.CLOUD_RUN_REGION }} \
+            --cpu=0.5 \
+            --memory=512Mi \
+            --min-instances=0 \
+            --max-instances=3 \
+            --set-secrets="GEMINI_API_KEY=${{ env.GEMINI_API_KEY_SECRET }}:latest" \
+            --set-env-vars="ENVIRONMENT=staging" \
+            --allow-unauthenticated
+
+  # ============================================
+  # Deploy to Production (Manual Approval)
+  # ============================================
+  deploy-production:
+    name: Deploy to Production
+    needs: [deploy-staging]
+    runs-on: ubuntu-latest
+    environment: production # Requires manual approval in GitHub settings
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy MCP Server to Cloud Run
+        run: |
+          gcloud run deploy mcp-server \
+            --image=${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/mcp-server:${{ github.sha }} \
+            --region=${{ env.CLOUD_RUN_REGION }} \
+            --cpu=0.5 \
+            --memory=512Mi \
+            --min-instances=1 \
+            --max-instances=10 \
+            --set-secrets="DB_PASSWORD=${{ env.DB_PASSWORD_SECRET }}:latest" \
+            --set-env-vars="SPRING_PROFILES_ACTIVE=production" \
+            --allow-unauthenticated
+
+      - name: Deploy Chat Backend to Cloud Run
+        run: |
+          gcloud run deploy chat-backend \
+            --image=${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/chat-backend:${{ github.sha }} \
+            --region=${{ env.CLOUD_RUN_REGION }} \
+            --cpu=0.5 \
+            --memory=512Mi \
+            --min-instances=1 \
+            --max-instances=10 \
+            --set-secrets="GEMINI_API_KEY=${{ env.GEMINI_API_KEY_SECRET }}:latest" \
+            --set-env-vars="ENVIRONMENT=production" \
+            --allow-unauthenticated

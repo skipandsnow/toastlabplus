@@ -1,0 +1,1337 @@
+<!DOCTYPE html><html><head>
+      <title>implementation_plan</title>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      
+      <link rel="stylesheet" href="file:///c:\Users\skipandsnow\.antigravity\extensions\shd101wyy.markdown-preview-enhanced-0.8.20-universal\crossnote\dependencies\katex\katex.min.css">
+      
+      
+      <script type="text/javascript" src="file:///c:\Users\skipandsnow\.antigravity\extensions\shd101wyy.markdown-preview-enhanced-0.8.20-universal\crossnote\dependencies\mermaid\mermaid.min.js" charset="UTF-8"></script>
+      
+      
+      <style>
+      code[class*=language-],pre[class*=language-]{color:#333;background:0 0;font-family:Consolas,"Liberation Mono",Menlo,Courier,monospace;text-align:left;white-space:pre;word-spacing:normal;word-break:normal;word-wrap:normal;line-height:1.4;-moz-tab-size:8;-o-tab-size:8;tab-size:8;-webkit-hyphens:none;-moz-hyphens:none;-ms-hyphens:none;hyphens:none}pre[class*=language-]{padding:.8em;overflow:auto;border-radius:3px;background:#f5f5f5}:not(pre)>code[class*=language-]{padding:.1em;border-radius:.3em;white-space:normal;background:#f5f5f5}.token.blockquote,.token.comment{color:#969896}.token.cdata{color:#183691}.token.doctype,.token.macro.property,.token.punctuation,.token.variable{color:#333}.token.builtin,.token.important,.token.keyword,.token.operator,.token.rule{color:#a71d5d}.token.attr-value,.token.regex,.token.string,.token.url{color:#183691}.token.atrule,.token.boolean,.token.code,.token.command,.token.constant,.token.entity,.token.number,.token.property,.token.symbol{color:#0086b3}.token.prolog,.token.selector,.token.tag{color:#63a35c}.token.attr-name,.token.class,.token.class-name,.token.function,.token.id,.token.namespace,.token.pseudo-class,.token.pseudo-element,.token.url-reference .token.variable{color:#795da3}.token.entity{cursor:help}.token.title,.token.title .token.punctuation{font-weight:700;color:#1d3e81}.token.list{color:#ed6a43}.token.inserted{background-color:#eaffea;color:#55a532}.token.deleted{background-color:#ffecec;color:#bd2c00}.token.bold{font-weight:700}.token.italic{font-style:italic}.language-json .token.property{color:#183691}.language-markup .token.tag .token.punctuation{color:#333}.language-css .token.function,code.language-css{color:#0086b3}.language-yaml .token.atrule{color:#63a35c}code.language-yaml{color:#183691}.language-ruby .token.function{color:#333}.language-markdown .token.url{color:#795da3}.language-makefile .token.symbol{color:#795da3}.language-makefile .token.variable{color:#183691}.language-makefile .token.builtin{color:#0086b3}.language-bash .token.keyword{color:#0086b3}pre[data-line]{position:relative;padding:1em 0 1em 3em}pre[data-line] .line-highlight-wrapper{position:absolute;top:0;left:0;background-color:transparent;display:block;width:100%}pre[data-line] .line-highlight{position:absolute;left:0;right:0;padding:inherit 0;margin-top:1em;background:hsla(24,20%,50%,.08);background:linear-gradient(to right,hsla(24,20%,50%,.1) 70%,hsla(24,20%,50%,0));pointer-events:none;line-height:inherit;white-space:pre}pre[data-line] .line-highlight:before,pre[data-line] .line-highlight[data-end]:after{content:attr(data-start);position:absolute;top:.4em;left:.6em;min-width:1em;padding:0 .5em;background-color:hsla(24,20%,50%,.4);color:#f4f1ef;font:bold 65%/1.5 sans-serif;text-align:center;vertical-align:.3em;border-radius:999px;text-shadow:none;box-shadow:0 1px #fff}pre[data-line] .line-highlight[data-end]:after{content:attr(data-end);top:auto;bottom:.4em}html body{font-family:'Helvetica Neue',Helvetica,'Segoe UI',Arial,freesans,sans-serif;font-size:16px;line-height:1.6;color:#333;background-color:#fff;overflow:initial;box-sizing:border-box;word-wrap:break-word}html body>:first-child{margin-top:0}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{line-height:1.2;margin-top:1em;margin-bottom:16px;color:#000}html body h1{font-size:2.25em;font-weight:300;padding-bottom:.3em}html body h2{font-size:1.75em;font-weight:400;padding-bottom:.3em}html body h3{font-size:1.5em;font-weight:500}html body h4{font-size:1.25em;font-weight:600}html body h5{font-size:1.1em;font-weight:600}html body h6{font-size:1em;font-weight:600}html body h1,html body h2,html body h3,html body h4,html body h5{font-weight:600}html body h5{font-size:1em}html body h6{color:#5c5c5c}html body strong{color:#000}html body del{color:#5c5c5c}html body a:not([href]){color:inherit;text-decoration:none}html body a{color:#08c;text-decoration:none}html body a:hover{color:#00a3f5;text-decoration:none}html body img{max-width:100%}html body>p{margin-top:0;margin-bottom:16px;word-wrap:break-word}html body>ol,html body>ul{margin-bottom:16px}html body ol,html body ul{padding-left:2em}html body ol.no-list,html body ul.no-list{padding:0;list-style-type:none}html body ol ol,html body ol ul,html body ul ol,html body ul ul{margin-top:0;margin-bottom:0}html body li{margin-bottom:0}html body li.task-list-item{list-style:none}html body li>p{margin-top:0;margin-bottom:0}html body .task-list-item-checkbox{margin:0 .2em .25em -1.8em;vertical-align:middle}html body .task-list-item-checkbox:hover{cursor:pointer}html body blockquote{margin:16px 0;font-size:inherit;padding:0 15px;color:#5c5c5c;background-color:#f0f0f0;border-left:4px solid #d6d6d6}html body blockquote>:first-child{margin-top:0}html body blockquote>:last-child{margin-bottom:0}html body hr{height:4px;margin:32px 0;background-color:#d6d6d6;border:0 none}html body table{margin:10px 0 15px 0;border-collapse:collapse;border-spacing:0;display:block;width:100%;overflow:auto;word-break:normal;word-break:keep-all}html body table th{font-weight:700;color:#000}html body table td,html body table th{border:1px solid #d6d6d6;padding:6px 13px}html body dl{padding:0}html body dl dt{padding:0;margin-top:16px;font-size:1em;font-style:italic;font-weight:700}html body dl dd{padding:0 16px;margin-bottom:16px}html body code{font-family:Menlo,Monaco,Consolas,'Courier New',monospace;font-size:.85em;color:#000;background-color:#f0f0f0;border-radius:3px;padding:.2em 0}html body code::after,html body code::before{letter-spacing:-.2em;content:'\00a0'}html body pre>code{padding:0;margin:0;word-break:normal;white-space:pre;background:0 0;border:0}html body .highlight{margin-bottom:16px}html body .highlight pre,html body pre{padding:1em;overflow:auto;line-height:1.45;border:#d6d6d6;border-radius:3px}html body .highlight pre{margin-bottom:0;word-break:normal}html body pre code,html body pre tt{display:inline;max-width:initial;padding:0;margin:0;overflow:initial;line-height:inherit;word-wrap:normal;background-color:transparent;border:0}html body pre code:after,html body pre code:before,html body pre tt:after,html body pre tt:before{content:normal}html body blockquote,html body dl,html body ol,html body p,html body pre,html body ul{margin-top:0;margin-bottom:16px}html body kbd{color:#000;border:1px solid #d6d6d6;border-bottom:2px solid #c7c7c7;padding:2px 4px;background-color:#f0f0f0;border-radius:3px}@media print{html body{background-color:#fff}html body h1,html body h2,html body h3,html body h4,html body h5,html body h6{color:#000;page-break-after:avoid}html body blockquote{color:#5c5c5c}html body pre{page-break-inside:avoid}html body table{display:table}html body img{display:block;max-width:100%;max-height:100%}html body code,html body pre{word-wrap:break-word;white-space:pre}}.markdown-preview{width:100%;height:100%;box-sizing:border-box}.markdown-preview ul{list-style:disc}.markdown-preview ul ul{list-style:circle}.markdown-preview ul ul ul{list-style:square}.markdown-preview ol{list-style:decimal}.markdown-preview ol ol,.markdown-preview ul ol{list-style-type:lower-roman}.markdown-preview ol ol ol,.markdown-preview ol ul ol,.markdown-preview ul ol ol,.markdown-preview ul ul ol{list-style-type:lower-alpha}.markdown-preview .newpage,.markdown-preview .pagebreak{page-break-before:always}.markdown-preview pre.line-numbers{position:relative;padding-left:3.8em;counter-reset:linenumber}.markdown-preview pre.line-numbers>code{position:relative}.markdown-preview pre.line-numbers .line-numbers-rows{position:absolute;pointer-events:none;top:1em;font-size:100%;left:0;width:3em;letter-spacing:-1px;border-right:1px solid #999;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.markdown-preview pre.line-numbers .line-numbers-rows>span{pointer-events:none;display:block;counter-increment:linenumber}.markdown-preview pre.line-numbers .line-numbers-rows>span:before{content:counter(linenumber);color:#999;display:block;padding-right:.8em;text-align:right}.markdown-preview .mathjax-exps .MathJax_Display{text-align:center!important}.markdown-preview:not([data-for=preview]) .code-chunk .code-chunk-btn-group{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .status{display:none}.markdown-preview:not([data-for=preview]) .code-chunk .output-div{margin-bottom:16px}.markdown-preview .md-toc{padding:0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link div,.markdown-preview .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}.markdown-preview .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}.scrollbar-style::-webkit-scrollbar{width:8px}.scrollbar-style::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}.scrollbar-style::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode]){position:relative;width:100%;height:100%;top:0;left:0;margin:0;padding:0;overflow:auto}html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{position:relative;top:0;min-height:100vh}@media screen and (min-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em calc(50% - 457px + 2em)}}@media screen and (max-width:914px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode]) .markdown-preview{font-size:14px!important;padding:1em}}@media print{html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{display:none}}html body[for=html-export]:not([data-presentation-mode]) #sidebar-toc-btn{position:fixed;bottom:8px;left:8px;font-size:28px;cursor:pointer;color:inherit;z-index:99;width:32px;text-align:center;opacity:.4}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] #sidebar-toc-btn{opacity:1}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc{position:fixed;top:0;left:0;width:300px;height:100%;padding:32px 0 48px 0;font-size:14px;box-shadow:0 0 4px rgba(150,150,150,.33);box-sizing:border-box;overflow:auto;background-color:inherit}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar{width:8px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-track{border-radius:10px;background-color:transparent}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc::-webkit-scrollbar-thumb{border-radius:5px;background-color:rgba(150,150,150,.66);border:4px solid rgba(150,150,150,.66);background-clip:content-box}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc a{text-decoration:none}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc{padding:0 16px}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link{display:inline;padding:.25rem 0}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link div,html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper .md-toc-link p{display:inline}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .md-sidebar-toc .md-toc .md-toc-link-wrapper.highlighted .md-toc-link{font-weight:800}html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{left:300px;width:calc(100% - 300px);padding:2em calc(50% - 457px - 300px / 2);margin:0;box-sizing:border-box}@media screen and (max-width:1274px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{padding:2em}}@media screen and (max-width:450px){html body[for=html-export]:not([data-presentation-mode])[html-show-sidebar-toc] .markdown-preview{width:100%}}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .markdown-preview{left:50%;transform:translateX(-50%)}html body[for=html-export]:not([data-presentation-mode]):not([html-show-sidebar-toc]) .md-sidebar-toc{display:none}
+/* Please visit the URL below for more information: */
+/*   https://shd101wyy.github.io/markdown-preview-enhanced/#/customize-css */
+
+      </style>
+      <!-- The content below will be included at the end of the <head> element. --><script type="text/javascript">
+  document.addEventListener("DOMContentLoaded", function () {
+    // your code here
+  });
+</script></head><body for="html-export">
+    
+    
+      <div class="crossnote markdown-preview  ">
+      
+<h1 id="toastlabplus-專案實作計畫">Toastlabplus 專案實作計畫 </h1>
+<blockquote>
+<p><strong>專案概述</strong>: Flutter App（宮崎駿風 UI + Chat）+ Azure 雲端服務</p>
+</blockquote>
+<hr>
+<h2 id="1-系統架構與資料流">1. 系統架構與資料流 </h2>
+<h3 id="11-架構概述">1.1 架構概述 </h3>
+<p>本系統採用前後端分離架構，以 Azure 為核心雲端平台。</p>
+<p><strong>核心組件</strong>:</p>
+<ul>
+<li><strong>Client Side</strong>: 使用 Flutter 建構跨平台 App，包含標準 UI 操作介面與 In-App Chat 聊天介面</li>
+<li><strong>AI Service</strong>: 透過 OpenAI ADK 框架建構 Chat Backend，連接 Azure OpenAI GPT-5.1 模型，負責理解用戶自然語言指令並調度 MCP Server</li>
+<li><strong>Core Backend</strong>: Spring Boot MCP Server 作為核心資料服務，處理所有業務邏輯與資料庫存取</li>
+<li><strong>Database</strong>: 使用 Azure SQL Serverless，兼顧效能與成本效益</li>
+</ul>
+<h3 id="12-系統架構圖">1.2 系統架構圖 </h3>
+<div class="mermaid">flowchart TB
+    subgraph ClientSide ["Client Side (Flutter App)"]
+        UI["UI Screens"]
+        ChatUI["In-App Chat UI"]
+        State["State Management&lt;br/&gt;Provider"]
+    end
+    
+    subgraph AzureCloud ["Azure Cloud Services"]
+        subgraph AIService ["AI Service"]
+            ChatBackend["Chat Backend&lt;br/&gt;OpenAI ADK"]
+            GPT["Azure OpenAI&lt;br/&gt;GPT-5.1"]
+        end
+        
+        subgraph CoreBackend ["Core Backend"]
+            MCP["MCP Server&lt;br/&gt;Spring Boot"]
+            DB[("Azure SQL&lt;br/&gt;Serverless")]
+        end
+    end
+    
+    UI --&gt;|"REST API / JSON"| MCP
+    ChatUI --&gt;|"WebSocket / HTTP"| ChatBackend
+    ChatBackend --&gt;|"Prompt"| GPT
+    ChatBackend --&gt;|"MCP Protocol / Tools"| MCP
+    MCP --&gt;|"JPA / SQL"| DB
+    
+    State &lt;--&gt; UI
+    State &lt;--&gt; ChatUI
+</div><hr>
+<h2 id="2-使用者註冊與身分選擇">2. 使用者註冊與身分選擇 </h2>
+<h3 id="21-註冊流程">2.1 註冊流程 </h3>
+<p>系統支援多種身分註冊，確保不同角色的使用者能獲得對應的權限與功能。</p>
+<p><strong>註冊步驟</strong>:</p>
+<ol>
+<li>
+<p><strong>註冊入口</strong>: 使用者下載 App 後，可選擇「註冊新帳號」</p>
+</li>
+<li>
+<p><strong>身分選擇</strong>:</p>
+<ul>
+<li>
+<p><strong>Guest (來賓)</strong>: 適用於非 Toastmasters 會員或參觀者</p>
+<ul>
+<li>僅需填寫基本姓名與 Email</li>
+<li>註冊後可瀏覽公開會議資訊</li>
+<li>無法報名角色</li>
+</ul>
+</li>
+<li>
+<p><strong>Member (會員)</strong>: 適用於正式會員</p>
+<ul>
+<li>註冊時需選擇所屬分會 (Club)</li>
+<li>提交後狀態為 <code>PENDING</code></li>
+<li>需等待分會管理員審核通過後才能啟用完整功能（如報名角色）</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>平台管理員</strong>: 系統預設一組最高權限帳號，用於建立分會與指派初始管理員</p>
+</li>
+</ol>
+<h3 id="22-註冊流程圖">2.2 註冊流程圖 </h3>
+<div class="mermaid">sequenceDiagram
+    actor User
+    participant App
+    participant Server
+    participant DB
+    
+    User-&gt;&gt;App: 開啟 App
+    App-&gt;&gt;User: 顯示登入/註冊頁
+    User-&gt;&gt;App: 點選「註冊」
+    App-&gt;&gt;User: 顯示身分選擇 (Guest / Member)
+    
+    alt 選擇 Guest (來賓)
+        User-&gt;&gt;App: 選擇 Guest
+        App-&gt;&gt;User: 顯示基本資料表單 (Name, Email)
+        User-&gt;&gt;App: 提交資料
+        App-&gt;&gt;Server: POST /api/guests
+        Server-&gt;&gt;DB: Insert Guest Record
+        Server--&gt;&gt;App: Return Token (Guest Role)
+        App-&gt;&gt;User: 進入首頁 (僅查看權限)
+        
+    else 選擇 Member (會員)
+        User-&gt;&gt;App: 選擇 Member
+        App-&gt;&gt;Server: GET /api/clubs (取得分會列表)
+        Server--&gt;&gt;App: Return Club List
+        App-&gt;&gt;User: 顯示資料表單 + 分會選單
+        User-&gt;&gt;App: 填寫資料 + 選擇分會
+        App-&gt;&gt;Server: POST /api/members
+        Server-&gt;&gt;DB: Insert Member (Status: PENDING)
+        Server--&gt;&gt;App: Return Success
+        App-&gt;&gt;User: 顯示「待審核」畫面
+    end
+</div><h3 id="23-會員審核狀態機">2.3 會員審核狀態機 </h3>
+<div class="mermaid">stateDiagram-v2
+    [*] --&gt; PENDING: 會員提交註冊
+    PENDING --&gt; APPROVED: Club Admin 審核通過
+    PENDING --&gt; REJECTED: Club Admin 拒絕
+    APPROVED --&gt; SUSPENDED: 違規停權
+    SUSPENDED --&gt; APPROVED: 恢復權限
+    REJECTED --&gt; [*]: 帳號刪除
+    APPROVED --&gt; [*]: 會員離會
+</div><h3 id="24-審核操作流程">2.4 審核操作流程 </h3>
+<div class="mermaid">sequenceDiagram
+    actor CA as Club Admin
+    participant App
+    participant Server
+    participant DB
+    participant Email as Email Service
+    
+    CA-&gt;&gt;App: 進入「會員審核」頁面
+    App-&gt;&gt;Server: GET /api/clubs/{clubId}/pending-members
+    Server-&gt;&gt;DB: 查詢該分會待審核會員
+    DB--&gt;&gt;Server: 待審核列表
+    Server--&gt;&gt;App: 返回列表 (含申請資料)
+    
+    App-&gt;&gt;CA: 顯示待審核列表
+    CA-&gt;&gt;App: 點選會員 → 查看詳情
+    
+    alt 審核通過
+        CA-&gt;&gt;App: 點擊「通過」
+        App-&gt;&gt;Server: PATCH /api/members/{id}/approve
+        Server-&gt;&gt;DB: UPDATE status = 'APPROVED'
+        Server-&gt;&gt;Email: 發送歡迎信
+        Server--&gt;&gt;App: 200 OK
+        App-&gt;&gt;CA: 顯示成功訊息
+        
+    else 審核拒絕
+        CA-&gt;&gt;App: 點擊「拒絕」+ 輸入原因
+        App-&gt;&gt;Server: PATCH /api/members/{id}/reject
+        Server-&gt;&gt;DB: UPDATE status = 'REJECTED'
+        Server-&gt;&gt;Email: 發送拒絕通知 (含原因)
+        Server--&gt;&gt;App: 200 OK
+        App-&gt;&gt;CA: 顯示已拒絕
+    end
+</div><h3 id="25-審核通知機制">2.5 審核通知機制 </h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">事件</th>
+<th style="text-align:left">通知對象</th>
+<th style="text-align:left">通知方式</th>
+<th style="text-align:left">內容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">新申請提交</td>
+<td style="text-align:left">Club Admin</td>
+<td style="text-align:left">App Push + Email</td>
+<td style="text-align:left">「有新會員申請加入」</td>
+</tr>
+<tr>
+<td style="text-align:left">審核通過</td>
+<td style="text-align:left">申請者</td>
+<td style="text-align:left">Email + App 通知</td>
+<td style="text-align:left">歡迎信 + 功能導覽連結</td>
+</tr>
+<tr>
+<td style="text-align:left">審核拒絕</td>
+<td style="text-align:left">申請者</td>
+<td style="text-align:left">Email</td>
+<td style="text-align:left">拒絕原因 + 重新申請引導</td>
+</tr>
+<tr>
+<td style="text-align:left">審核超時 (7天未處理)</td>
+<td style="text-align:left">Club Admin</td>
+<td style="text-align:left">App Push</td>
+<td style="text-align:left">提醒處理待審核申請</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="3-角色權限設計">3. 角色權限設計 </h2>
+<h3 id="31-權限階級">3.1 權限階級 </h3>
+<p>系統定義了四種權限階級，嚴格控管功能存取：</p>
+<ul>
+<li><strong>Platform Admin</strong> (平台管理員)</li>
+<li><strong>Club Admin</strong> (分會管理員)</li>
+<li><strong>Member</strong> (會員)</li>
+<li><strong>Guest</strong> (來賓)</li>
+</ul>
+<h3 id="32-資料可視範圍原則">3.2 資料可視範圍原則 </h3>
+<p>系統採用「分會隔離」原則，確保各分會資料互不可見。</p>
+<div class="mermaid">flowchart TB
+    subgraph Visibility ["可視權限架構"]
+        PA["Platform Admin&lt;br/&gt;👑 全平台可視"]
+        CA["Club Admin&lt;br/&gt;🏠 本會可視"]
+        MB["Member&lt;br/&gt;👤 本會資料"]
+        GT["Guest&lt;br/&gt;👁️ 公開資料"]
+    end
+    
+    PA --&gt; |"管理所有分會"| AllClubs["所有分會資料"]
+    CA --&gt; |"僅管理本會"| OwnClub["本分會資料"]
+    MB --&gt; |"僅查看本會"| OwnClub
+    GT --&gt; |"僅公開資訊"| PublicInfo["公開會議資訊"]
+</div><h3 id="33-club-admin-可視權限詳細矩陣">3.3 Club Admin 可視權限詳細矩陣 </h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">資料類型</th>
+<th style="text-align:center">本會資料</th>
+<th style="text-align:center">他會資料</th>
+<th style="text-align:left">說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><strong>會員列表</strong></td>
+<td style="text-align:center">✅ 完整資料</td>
+<td style="text-align:center">❌ 不可見</td>
+<td style="text-align:left">含姓名、Email、狀態、職位</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>待審核會員</strong></td>
+<td style="text-align:center">✅ 完整資料</td>
+<td style="text-align:center">❌ 不可見</td>
+<td style="text-align:left">可執行審核操作</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>會議列表</strong></td>
+<td style="text-align:center">✅ 完整</td>
+<td style="text-align:center">🔵 僅公開</td>
+<td style="text-align:left">他會僅見已發布的公開會議</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>角色報名狀態</strong></td>
+<td style="text-align:center">✅ 含會員姓名</td>
+<td style="text-align:center">🔵 僅統計</td>
+<td style="text-align:left">他會僅見「已報名 X 人」</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>Agenda 模板</strong></td>
+<td style="text-align:center">✅ 可編輯</td>
+<td style="text-align:center">❌ 不可見</td>
+<td style="text-align:left">模板屬於各分會私有</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>Agenda 文件</strong></td>
+<td style="text-align:center">✅ 可編輯</td>
+<td style="text-align:center">🔵 僅已發布</td>
+<td style="text-align:left">他會僅見最終版 Agenda</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>分會設定</strong></td>
+<td style="text-align:center">✅ 可編輯</td>
+<td style="text-align:center">🔵 僅基本資訊</td>
+<td style="text-align:left">名稱、聯絡方式等公開資訊</td>
+</tr>
+</tbody>
+</table>
+<h3 id="34-api-資料過濾機制">3.4 API 資料過濾機制 </h3>
+<div class="mermaid">sequenceDiagram
+    participant App
+    participant API as API Gateway
+    participant Auth as Auth Service
+    participant MCP as MCP Server
+    participant DB
+    
+    App-&gt;&gt;API: GET /api/members (with JWT)
+    API-&gt;&gt;Auth: 驗證 Token
+    Auth--&gt;&gt;API: User Context&lt;br/&gt;(role, clubId)
+    
+    API-&gt;&gt;MCP: 轉發請求 + Context
+    
+    alt Platform Admin
+        MCP-&gt;&gt;DB: SELECT * FROM members
+        DB--&gt;&gt;MCP: 回傳所有會員
+    else Club Admin / Member
+        MCP-&gt;&gt;DB: SELECT * FROM members&lt;br/&gt;WHERE club_id = :userClubId
+        DB--&gt;&gt;MCP: 回傳本會會員
+    else Guest
+        MCP--&gt;&gt;API: 403 Forbidden
+    end
+    
+    MCP--&gt;&gt;App: 過濾後的資料
+</div><h3 id="35-功能權限矩陣">3.5 功能權限矩陣 </h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">功能模組</th>
+<th style="text-align:left">功能項目</th>
+<th style="text-align:center">Platform Admin</th>
+<th style="text-align:center">Club Admin</th>
+<th style="text-align:center">Member</th>
+<th style="text-align:center">Guest</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center"><strong>系統管理</strong></td>
+<td style="text-align:left">新增/刪除分會</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:left">指定分會管理員</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:left">維護角色定義</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>分會管理</strong></td>
+<td style="text-align:left">審核會員註冊</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:left">指派分會職位 (VPE等)</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:left">編輯分會資訊</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>會議管理</strong></td>
+<td style="text-align:left">建立/編輯會議</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:left">產生/匯出 Agenda</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:left">管理 Agenda 模板</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>角色報名</strong></td>
+<td style="text-align:left">報名會議角色</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:left">取消自己角色</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:left">強制移除他人角色</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:left">代理報名他人</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td style="text-align:center"><strong>資訊瀏覽</strong></td>
+<td style="text-align:left">查看會議議程</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+</tr>
+<tr>
+<td style="text-align:center"></td>
+<td style="text-align:left">查看分會資訊</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+</tr>
+</tbody>
+</table>
+<h3 id="36-分會職位">3.6 分會職位 </h3>
+<p>分會管理員可將以下職位指派給會員（一職一人），這些職位在 App 中會有特殊標識，且 VPE 擁有產生 Agenda 的權限：</p>
+<ul>
+<li><strong>President</strong> (會長)</li>
+<li><strong>VPE</strong> (教育副會長) - <em>核心操作者</em></li>
+<li><strong>VPM</strong> (會員副會長)</li>
+<li><strong>VPPR</strong> (公關副會長)</li>
+<li><strong>Secretary</strong> (秘書)</li>
+<li><strong>Treasurer</strong> (財務長)</li>
+<li><strong>SAA</strong> (場控)</li>
+</ul>
+<hr>
+<h2 id="4-會議管理細部流程">4. 會議管理細部流程 </h2>
+<h3 id="41-會議生命週期">4.1 會議生命週期 </h3>
+<div class="mermaid">stateDiagram-v2
+    [*] --&gt; DRAFT: 建立會議
+    DRAFT --&gt; OPEN: 開放報名
+    OPEN --&gt; CLOSED: 截止報名
+    CLOSED --&gt; FINALIZED: 確認 Agenda
+    FINALIZED --&gt; COMPLETED: 會議結束
+    
+    DRAFT --&gt; CANCELLED: 取消會議
+    OPEN --&gt; CANCELLED: 取消會議
+    CLOSED --&gt; CANCELLED: 取消會議
+</div><h3 id="42-會議建立流程">4.2 會議建立流程 </h3>
+<div class="mermaid">sequenceDiagram
+    actor VPE
+    participant App
+    participant Server
+    participant DB
+    
+    VPE-&gt;&gt;App: 點擊「建立會議」
+    App-&gt;&gt;VPE: 顯示會議建立表單
+    
+    Note over App: 必填欄位：&lt;br/&gt;- 會議日期&lt;br/&gt;- 開始時間&lt;br/&gt;- 會議類型&lt;br/&gt;- 可選模板
+    
+    VPE-&gt;&gt;App: 填寫資料並提交
+    App-&gt;&gt;Server: POST /api/meetings
+    
+    Server-&gt;&gt;DB: 驗證無衝突日期
+    
+    alt 日期可用
+        Server-&gt;&gt;DB: INSERT meeting (status: DRAFT)
+        Server-&gt;&gt;DB: 根據模板建立角色空缺
+        DB--&gt;&gt;Server: 建立成功
+        Server--&gt;&gt;App: 201 Created + meeting_id
+        App-&gt;&gt;VPE: 跳轉至會議詳情頁
+    else 日期衝突
+        Server--&gt;&gt;App: 409 Conflict
+        App-&gt;&gt;VPE: 提示「該日期已有會議」
+    end
+</div><h3 id="43-會議編輯權限">4.3 會議編輯權限 </h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">操作</th>
+<th style="text-align:center">DRAFT</th>
+<th style="text-align:center">OPEN</th>
+<th style="text-align:center">CLOSED</th>
+<th style="text-align:center">FINALIZED</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">修改日期/時間</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">⚠️ 需通知</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td style="text-align:left">修改會議類型</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td style="text-align:left">增減角色</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">⚠️ 需確認</td>
+<td style="text-align:center">❌</td>
+</tr>
+<tr>
+<td style="text-align:left">開放報名</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">-</td>
+<td style="text-align:center">-</td>
+<td style="text-align:center">-</td>
+</tr>
+<tr>
+<td style="text-align:left">截止報名</td>
+<td style="text-align:center">-</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">-</td>
+<td style="text-align:center">-</td>
+</tr>
+<tr>
+<td style="text-align:left">產生 Agenda</td>
+<td style="text-align:center">-</td>
+<td style="text-align:center">-</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅ (微調)</td>
+</tr>
+<tr>
+<td style="text-align:left">取消會議</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅ 需通知</td>
+<td style="text-align:center">✅ 需確認</td>
+<td style="text-align:center">❌</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="5-會議角色註冊流程">5. 會議角色註冊流程 </h2>
+<p>提供「Chat 對話」與「UI 介面」兩種操作方式，資料即時同步。</p>
+<h3 id="51-角色類型與限制">5.1 角色類型與限制 </h3>
+<div class="mermaid">flowchart LR
+    subgraph RoleTypes ["角色類型"]
+        Single["單一角色&lt;br/&gt;TME, Timer, GE"]
+        Multi["多人角色&lt;br/&gt;Speaker (1-5)"]
+        Optional["選填角色&lt;br/&gt;IE1, IE2"]
+    end
+    
+    subgraph Rules ["數量限制"]
+        R1["TME: 1人"]
+        R2["Speaker: 最多5人"]
+        R3["Timer: 1人"]
+        R4["Evaluator: 對應 Speaker 數"]
+    end
+    
+    Single --&gt; R1
+    Single --&gt; R3
+    Multi --&gt; R2
+    Multi --&gt; R4
+</div><h3 id="52-chat-對話式註冊">5.2 Chat 對話式註冊 </h3>
+<p>透過自然語言與 AI 互動。AI 會先檢查角色空缺狀態，若有空缺則顯示互動式按鈕（Button）供用戶確認，避免誤操作。</p>
+<p><strong>功能特點</strong>:</p>
+<ul>
+<li><strong>指令範例</strong>: 「我要報名下週五的 Timer」、「取消我的 TME 角色」</li>
+<li><strong>防呆機制</strong>: 若角色已滿，AI 會建議其他空缺角色或候補</li>
+</ul>
+<p><strong>對話流程圖</strong>:</p>
+<div class="mermaid">sequenceDiagram
+    actor User
+    participant ChatUI
+    participant ChatBackend
+    participant MCP
+    
+    User-&gt;&gt;ChatUI: 輸入「我要擔任 12/10 的 TME」
+    ChatUI-&gt;&gt;ChatBackend: Send Message
+    ChatBackend-&gt;&gt;MCP: Call Tool: check_role_availability
+    MCP--&gt;&gt;ChatBackend: Return: Available
+    
+    ChatBackend--&gt;&gt;ChatUI: 回覆訊息 + Action Buttons
+    Note right of ChatUI: "12/10 TME 目前空缺，確認註冊？"&lt;br/&gt;[✅ 確認] [❌ 取消]
+    
+    User-&gt;&gt;ChatUI: 點擊 [✅ 確認]
+    ChatUI-&gt;&gt;ChatBackend: Send Action: CONFIRM_REGISTRATION
+    ChatBackend-&gt;&gt;MCP: Call Tool: register_role
+    MCP--&gt;&gt;ChatBackend: Return: Success
+    ChatBackend--&gt;&gt;ChatUI: 回覆: "✅ 已為您註冊 12/10 TME"
+</div><h3 id="53-ui-介面註冊">5.3 UI 介面註冊 </h3>
+<p>視覺化的角色列表，提供直覺的操作體驗。</p>
+<p><strong>功能特點</strong>:</p>
+<ul>
+<li><strong>狀態顯示</strong>: 每個角色卡片會顯示「空缺（可報名）」、「已額滿（顯示頭像）」或「已報名（顯示取消按鈕）」</li>
+<li><strong>操作流程</strong>: 點擊空缺卡片 → 彈出確認窗 → 完成報名</li>
+</ul>
+<p><strong>操作流程圖</strong>:</p>
+<div class="mermaid">flowchart TD
+    A["進入會議列表"] --&gt; B["選擇目標會議"]
+    B --&gt; C["進入角色報名頁"]
+    C --&gt; D{"檢查角色狀態"}
+    
+    D --&gt;|"空缺"| E["顯示「報名」按鈕"]
+    D --&gt;|"已額滿"| F["顯示佔用者頭像"]
+    D --&gt;|"自己已報名"| G["顯示「取消」按鈕"]
+    
+    E --&gt; H["點擊報名"]
+    H --&gt; I["彈出確認視窗"]
+    I --&gt;|"確認"| J["呼叫 API 註冊"]
+    J --&gt; K["更新 UI 顯示自己頭像"]
+    
+    G --&gt; L["點擊取消"]
+    L --&gt; M["呼叫 API 取消"]
+    M --&gt; N["更新 UI 顯示空缺"]
+</div><h3 id="54-角色報名防呆流程">5.4 角色報名防呆流程 </h3>
+<div class="mermaid">flowchart TD
+    Start["用戶點擊報名"] --&gt; CheckAuth{"檢查身分"}
+    
+    CheckAuth --&gt;|"Guest"| Deny1["❌ 拒絕：請先成為會員"]
+    CheckAuth --&gt;|"Member (PENDING)"| Deny2["❌ 拒絕：帳號審核中"]
+    CheckAuth --&gt;|"Member (APPROVED)"| CheckRole{"檢查角色狀態"}
+    
+    CheckRole --&gt;|"角色已滿"| Deny3["❌ 拒絕：角色已被報名"]
+    CheckRole --&gt;|"已報名其他角色"| CheckConflict{"衝突檢查"}
+    CheckRole --&gt;|"角色空缺"| Confirm["顯示確認對話框"]
+    
+    CheckConflict --&gt;|"同時段衝突"| Deny4["❌ 拒絕：與已報名角色衝突"]
+    CheckConflict --&gt;|"無衝突"| Confirm
+    
+    Confirm --&gt;|"確認"| Register["執行報名"]
+    Confirm --&gt;|"取消"| End["結束"]
+    
+    Register --&gt; Success["✅ 報名成功"]
+</div><h3 id="55-角色衝突規則">5.5 角色衝突規則 </h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">角色 A</th>
+<th style="text-align:left">可兼任</th>
+<th style="text-align:left">不可兼任</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>TME</strong></td>
+<td style="text-align:left">-</td>
+<td style="text-align:left">Speaker, GE, Timer, Evaluator</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Speaker</strong></td>
+<td style="text-align:left">IE (非同場)</td>
+<td style="text-align:left">TME, Evaluator (同一人)</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Timer</strong></td>
+<td style="text-align:left">AH Counter, Grammarian</td>
+<td style="text-align:left">TME</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>GE</strong></td>
+<td style="text-align:left">-</td>
+<td style="text-align:left">TME, Speaker, Evaluator</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Evaluator</strong></td>
+<td style="text-align:left">Timer, AH Counter</td>
+<td style="text-align:left">TME, GE, 對應 Speaker</td>
+</tr>
+</tbody>
+</table>
+<h3 id="56-管理員代理報名">5.6 管理員代理報名 </h3>
+<p>Club Admin 可代替會員報名或取消報名：</p>
+<div class="mermaid">sequenceDiagram
+    actor CA as Club Admin
+    participant App
+    participant Server
+    participant DB
+    
+    CA-&gt;&gt;App: 進入會議角色頁面
+    App-&gt;&gt;CA: 顯示角色列表 + 「指派」按鈕
+    
+    CA-&gt;&gt;App: 點擊空缺角色的「指派」
+    App-&gt;&gt;Server: GET /api/clubs/{clubId}/members
+    Server--&gt;&gt;App: 返回可選會員列表
+    
+    App-&gt;&gt;CA: 顯示會員選擇下拉
+    CA-&gt;&gt;App: 選擇會員 + 確認
+    App-&gt;&gt;Server: POST /api/role-assignments&lt;br/&gt;{memberId, roleId, assignedBy}
+    
+    Server-&gt;&gt;DB: INSERT 含 assigned_by_admin = true
+    Server--&gt;&gt;App: 201 Created
+    
+    Note over Server: 發送通知給被指派會員
+    App-&gt;&gt;CA: 顯示「已指派」
+</div><hr>
+<h2 id="6-agenda-模板管理與產生">6. Agenda 模板管理與產生 </h2>
+<p>此功能專為 VPE（教育副會長）設計，用於快速產生標準化的會議議程。</p>
+<h3 id="61-模板管理">6.1 模板管理 </h3>
+<p><strong>功能流程</strong>:</p>
+<ol>
+<li><strong>上傳</strong>: 支援上傳 Excel 格式的議程範本</li>
+<li><strong>解析與編輯</strong>: 後端解析 Excel 後，VPE 可在 App 介面上調整時段順序、時間長度與負責職位</li>
+<li><strong>儲存</strong>: 將調整好的結構儲存為「標準例會」、「比賽」、「特別活動」等不同模板</li>
+</ol>
+<h3 id="62-模板結構設計">6.2 模板結構設計 </h3>
+<pre data-role="codeBlock" data-info="json" class="language-json json"><code><span class="token punctuation">{</span>
+  <span class="token property">"templateId"</span><span class="token operator">:</span> <span class="token string">"standard-meeting-v1"</span><span class="token punctuation">,</span>
+  <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"標準例會"</span><span class="token punctuation">,</span>
+  <span class="token property">"sections"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">"order"</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+      <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"開場"</span><span class="token punctuation">,</span>
+      <span class="token property">"duration"</span><span class="token operator">:</span> <span class="token number">10</span><span class="token punctuation">,</span>
+      <span class="token property">"items"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">{</span> <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"Sergeant at Arms"</span><span class="token punctuation">,</span> <span class="token property">"role"</span><span class="token operator">:</span> <span class="token string">"SAA"</span><span class="token punctuation">,</span> <span class="token property">"duration"</span><span class="token operator">:</span> <span class="token number">3</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span> <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"Opening"</span><span class="token punctuation">,</span> <span class="token property">"role"</span><span class="token operator">:</span> <span class="token string">"President"</span><span class="token punctuation">,</span> <span class="token property">"duration"</span><span class="token operator">:</span> <span class="token number">2</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span> <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"TME Welcome"</span><span class="token punctuation">,</span> <span class="token property">"role"</span><span class="token operator">:</span> <span class="token string">"TME"</span><span class="token punctuation">,</span> <span class="token property">"duration"</span><span class="token operator">:</span> <span class="token number">5</span> <span class="token punctuation">}</span>
+      <span class="token punctuation">]</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">"order"</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+      <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"準備演講"</span><span class="token punctuation">,</span>
+      <span class="token property">"duration"</span><span class="token operator">:</span> <span class="token number">35</span><span class="token punctuation">,</span>
+      <span class="token property">"items"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">{</span> <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"Speaker 1"</span><span class="token punctuation">,</span> <span class="token property">"role"</span><span class="token operator">:</span> <span class="token string">"Speaker"</span><span class="token punctuation">,</span> <span class="token property">"duration"</span><span class="token operator">:</span> <span class="token number">7</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span> <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"Speaker 2"</span><span class="token punctuation">,</span> <span class="token property">"role"</span><span class="token operator">:</span> <span class="token string">"Speaker"</span><span class="token punctuation">,</span> <span class="token property">"duration"</span><span class="token operator">:</span> <span class="token number">7</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span> <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"Speaker 3"</span><span class="token punctuation">,</span> <span class="token property">"role"</span><span class="token operator">:</span> <span class="token string">"Speaker"</span><span class="token punctuation">,</span> <span class="token property">"duration"</span><span class="token operator">:</span> <span class="token number">7</span> <span class="token punctuation">}</span>
+      <span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre><h3 id="63-議程產生">6.3 議程產生 </h3>
+<p><strong>功能流程</strong>:</p>
+<ol>
+<li><strong>選擇</strong>: 選擇會議日期與要套用的模板</li>
+<li><strong>自動合併</strong>: 系統自動將該次會議「已報名的角色」（如 TME, Speaker 1, Timer）填入模板對應的欄位</li>
+<li><strong>微調與發布</strong>: VPE 可手動修改講題、調整臨時變動，確認無誤後匯出 PDF 或產生分享連結</li>
+</ol>
+<h3 id="64-議程產生流程">6.4 議程產生流程 </h3>
+<div class="mermaid">sequenceDiagram
+    actor VPE
+    participant App
+    participant Server
+    participant DB
+    participant PDF as PDF Service
+    
+    VPE-&gt;&gt;App: 進入「產生 Agenda」
+    App-&gt;&gt;Server: GET /api/meetings/{id}/roles
+    Server--&gt;&gt;App: 返回已報名角色列表
+    
+    App-&gt;&gt;Server: GET /api/templates
+    Server--&gt;&gt;App: 返回可用模板列表
+    
+    App-&gt;&gt;VPE: 顯示模板選擇 + 角色填充預覽
+    VPE-&gt;&gt;App: 選擇模板
+    
+    App-&gt;&gt;Server: POST /api/agendas/preview
+    Server-&gt;&gt;Server: 合併模板 + 角色資料
+    Server--&gt;&gt;App: 返回預覽 HTML
+    
+    App-&gt;&gt;VPE: 顯示 Agenda 預覽
+    VPE-&gt;&gt;App: 微調內容 (講題等)
+    
+    VPE-&gt;&gt;App: 點擊「確認並產生」
+    App-&gt;&gt;Server: POST /api/agendas
+    Server-&gt;&gt;DB: INSERT agenda_item (s)
+    Server-&gt;&gt;PDF: 產生 PDF
+    PDF--&gt;&gt;Server: 返回 PDF URL
+    Server--&gt;&gt;App: 返回 Agenda + PDF Link
+    
+    App-&gt;&gt;VPE: 顯示成功 + 分享選項
+</div><h3 id="65-agenda-狀態與權限">6.5 Agenda 狀態與權限 </h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">狀態</th>
+<th style="text-align:left">VPE 操作</th>
+<th style="text-align:left">Club Admin 操作</th>
+<th style="text-align:left">會員可見</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>DRAFT</strong></td>
+<td style="text-align:left">編輯、刪除、預覽</td>
+<td style="text-align:left">查看、編輯</td>
+<td style="text-align:left">❌</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>PUBLISHED</strong></td>
+<td style="text-align:left">小幅修正、發布更新</td>
+<td style="text-align:left">查看、修正</td>
+<td style="text-align:left">✅ 查看</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>ARCHIVED</strong></td>
+<td style="text-align:left">查看</td>
+<td style="text-align:left">查看</td>
+<td style="text-align:left">✅ 查看</td>
+</tr>
+</tbody>
+</table>
+<h3 id="66-模板與產生流程圖">6.6 模板與產生流程圖 </h3>
+<div class="mermaid">flowchart TD
+    subgraph TemplateMgmt ["模板管理 (Template Management)"]
+        Upload["上傳 Excel 範本"] --&gt; Parse["後端解析結構"]
+        Parse --&gt; Edit["UI 編輯介面&lt;br/&gt;調整時段/順序/時長"]
+        Edit --&gt; Save["儲存為模板"]
+        Save --&gt; DB_Template[("儲存至資料庫")]
+    end
+    
+    subgraph AgendaGen ["議程產生 (Agenda Generation)"]
+        SelectMeeting["選擇會議日期"] --&gt; SelectTemplate["選擇模板&lt;br/&gt;(下拉選單)"]
+        SelectTemplate --&gt; LoadRoles["載入已註冊角色&lt;br/&gt;(TME, Speakers...)"]
+        DB_Template --&gt; Merge
+        LoadRoles --&gt; Merge["合併模板與角色資料"]
+        
+        Merge --&gt; Preview["預覽 Agenda"]
+        Preview --&gt; ManualEdit["手動微調內容"]
+        ManualEdit --&gt; Finalize["確認定稿"]
+        Finalize --&gt; Export["匯出 PDF / 分享"]
+    end
+</div><hr>
+<h2 id="7-會議投票機制-voting-system">7. 會議投票機制 (Voting System) </h2>
+<p>會議進行中的即時投票功能，由 TME 控制投票流程，所有會議參與者皆可投票。</p>
+<h3 id="71-投票流程概述">7.1 投票流程概述 </h3>
+<div class="mermaid">sequenceDiagram
+    actor TME
+    actor Participants as 參與者 (Member/Guest)
+    participant App
+    participant Server
+    participant WS as WebSocket
+    
+    Note over TME,WS: 會議進行中...
+    
+    TME-&gt;&gt;App: 點擊「開始投票」
+    App-&gt;&gt;Server: POST /api/meetings/{id}/voting/start
+    Server-&gt;&gt;WS: 廣播 VOTING_STARTED
+    WS--&gt;&gt;Participants: 收到投票開始通知
+    
+    Note over App: 所有人 App 顯示投票介面
+    
+    loop 每位參與者投票
+        Participants-&gt;&gt;App: 選擇各角色的票選
+        App-&gt;&gt;Server: POST /api/votes
+        Server--&gt;&gt;App: 投票成功 (不顯示當前票數)
+    end
+    
+    TME-&gt;&gt;App: 點擊「結束投票」
+    App-&gt;&gt;Server: POST /api/meetings/{id}/voting/end
+    Server-&gt;&gt;Server: 計算投票結果
+    Server-&gt;&gt;WS: 廣播 VOTING_ENDED + Results
+    WS--&gt;&gt;Participants: 收到結果通知
+    
+    Note over App: 所有人 App 顯示投票結果
+</div><h3 id="72-投票狀態機">7.2 投票狀態機 </h3>
+<div class="mermaid">stateDiagram-v2
+    [*] --&gt; NOT_STARTED: 會議開始
+    NOT_STARTED --&gt; VOTING: TME 啟動投票
+    VOTING --&gt; ENDED: TME 結束投票
+    ENDED --&gt; [*]: 結果已顯示
+</div><h3 id="73-投票類別與獎項">7.3 投票類別與獎項 </h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">投票類別</th>
+<th style="text-align:left">對象</th>
+<th style="text-align:left">說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>Best Speaker</strong></td>
+<td style="text-align:left">所有 Speaker</td>
+<td style="text-align:left">最佳演講者</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Best Evaluator</strong></td>
+<td style="text-align:left">所有 Evaluator</td>
+<td style="text-align:left">最佳講評者</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Best Table Topic</strong></td>
+<td style="text-align:left">Table Topic 回答者</td>
+<td style="text-align:left">最佳即席演講</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Best Support Role</strong></td>
+<td style="text-align:left">Timer, AH Counter, Grammarian</td>
+<td style="text-align:left">最佳輔助角色</td>
+</tr>
+</tbody>
+</table>
+<h3 id="74-投票權限">7.4 投票權限 </h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">角色</th>
+<th style="text-align:left">操作</th>
+<th style="text-align:left">說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>TME</strong></td>
+<td style="text-align:left">✅ 啟動/結束投票</td>
+<td style="text-align:left">唯一控制者</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Member (APPROVED)</strong></td>
+<td style="text-align:left">✅ 投票</td>
+<td style="text-align:left">需為會議參與者</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Guest</strong></td>
+<td style="text-align:left">✅ 投票</td>
+<td style="text-align:left">需為會議參與者</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Role Taker</strong></td>
+<td style="text-align:left">❌ 自己類別</td>
+<td style="text-align:left">不能投票給自己</td>
+</tr>
+</tbody>
+</table>
+<h3 id="75-投票介面流程">7.5 投票介面流程 </h3>
+<div class="mermaid">flowchart TD
+    subgraph TMEView ["TME 視角"]
+        T1["會議進行中"] --&gt; T2["點擊「開始投票」"]
+        T2 --&gt; T3["監控投票進度&lt;br/&gt;已投票 X/Y 人"]
+        T3 --&gt; T4["點擊「結束投票」"]
+        T4 --&gt; T5["顯示結果 + 宣布得獎者"]
+    end
+    
+    subgraph ParticipantView ["參與者視角"]
+        P1["收到投票開始通知"] --&gt; P2["App 跳出投票浮層"]
+        P2 --&gt; P3["選擇各類別得獎者"]
+        P3 --&gt; P4["提交投票"]
+        P4 --&gt; P5["等待結果..."]
+        P5 --&gt; P6["顯示投票結果"]
+    end
+</div><h3 id="76-投票-api-設計">7.6 投票 API 設計 </h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Method</th>
+<th style="text-align:left">Endpoint</th>
+<th style="text-align:left">說明</th>
+<th style="text-align:left">權限</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>POST</code></td>
+<td style="text-align:left"><code>/api/meetings/{id}/voting/start</code></td>
+<td style="text-align:left">啟動投票</td>
+<td style="text-align:left">TME only</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>POST</code></td>
+<td style="text-align:left"><code>/api/meetings/{id}/voting/end</code></td>
+<td style="text-align:left">結束投票</td>
+<td style="text-align:left">TME only</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>GET</code></td>
+<td style="text-align:left"><code>/api/meetings/{id}/voting/status</code></td>
+<td style="text-align:left">查詢投票狀態</td>
+<td style="text-align:left">參與者</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>POST</code></td>
+<td style="text-align:left"><code>/api/votes</code></td>
+<td style="text-align:left">提交投票</td>
+<td style="text-align:left">參與者</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>GET</code></td>
+<td style="text-align:left"><code>/api/meetings/{id}/voting/results</code></td>
+<td style="text-align:left">查詢結果</td>
+<td style="text-align:left">投票結束後</td>
+</tr>
+</tbody>
+</table>
+<h3 id="77-即時通訊設計">7.7 即時通訊設計 </h3>
+<p>使用 WebSocket 實現即時同步：</p>
+<div class="mermaid">flowchart LR
+    subgraph Events ["WebSocket Events"]
+        E1["VOTING_STARTED"] --&gt; |"payload"| D1["meetingId, categories"]
+        E2["VOTE_SUBMITTED"] --&gt; |"payload"| D2["voterId (僅 TME 可見)"]
+        E3["VOTING_ENDED"] --&gt; |"payload"| D3["results, winners"]
+    end
+</div><h3 id="78-資料庫設計">7.8 資料庫設計 </h3>
+<div class="mermaid">erDiagram
+    MEETING ||--o| VOTING_SESSION : has
+    VOTING_SESSION ||--o{ VOTE : contains
+    
+    VOTING_SESSION {
+        bigint id PK
+        bigint meeting_id FK
+        string status "NOT_STARTED, VOTING, ENDED"
+        timestamp started_at
+        timestamp ended_at
+        bigint started_by FK
+    }
+    
+    VOTE {
+        bigint id PK
+        bigint session_id FK
+        bigint voter_id FK
+        string category "BEST_SPEAKER, BEST_EVALUATOR..."
+        bigint voted_for FK
+        timestamp created_at
+    }
+    
+    VOTE_RESULT {
+        bigint id PK
+        bigint session_id FK
+        string category
+        bigint winner_id FK
+        int vote_count
+    }
+</div><hr>
+<h2 id="8-通知系統設計">8. 通知系統設計 </h2>
+<h3 id="81-通知類型與觸發條件">8.1 通知類型與觸發條件 </h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">類別</th>
+<th style="text-align:left">事件</th>
+<th style="text-align:left">通知對象</th>
+<th style="text-align:left">通知管道</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>會員</strong></td>
+<td style="text-align:left">審核通過/拒絕</td>
+<td style="text-align:left">申請者</td>
+<td style="text-align:left">Push + Email</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>會議</strong></td>
+<td style="text-align:left">新會議建立</td>
+<td style="text-align:left">全體會員</td>
+<td style="text-align:left">Push</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">會議取消</td>
+<td style="text-align:left">已報名者</td>
+<td style="text-align:left">Push + Email</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">報名截止提醒</td>
+<td style="text-align:left">未報名會員</td>
+<td style="text-align:left">Push</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>角色</strong></td>
+<td style="text-align:left">被指派角色</td>
+<td style="text-align:left">被指派者</td>
+<td style="text-align:left">Push</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">角色被移除</td>
+<td style="text-align:left">原報名者</td>
+<td style="text-align:left">Push + Email</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Agenda</strong></td>
+<td style="text-align:left">Agenda 發布</td>
+<td style="text-align:left">全體會員</td>
+<td style="text-align:left">Push</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">Agenda 更新</td>
+<td style="text-align:left">全體會員</td>
+<td style="text-align:left">Push</td>
+</tr>
+</tbody>
+</table>
+<h3 id="82-通知偏好設定">8.2 通知偏好設定 </h3>
+<p>用戶可在設定中調整通知偏好：</p>
+<div class="mermaid">flowchart LR
+    subgraph Settings ["通知設定"]
+        A["Push 通知"] --&gt; |"開/關"| A1["全部"]
+        A --&gt; A2["僅重要"]
+        A --&gt; A3["關閉"]
+        
+        B["Email 通知"] --&gt; |"開/關"| B1["全部"]
+        B --&gt; B2["僅重要"]
+        B --&gt; B3["關閉"]
+    end
+</div><hr>
+<h2 id="8-資料庫設計">8. 資料庫設計 </h2>
+<h3 id="81-主要實體">8.1 主要實體 </h3>
+<ul>
+<li><strong>CLUB</strong>: 分會基本資料</li>
+<li><strong>MEMBER</strong>: 會員資料，包含權限角色（Role）與狀態</li>
+<li><strong>MEETING</strong>: 會議主檔，包含日期、主題</li>
+<li><strong>ROLE_ASSIGNMENT</strong>: 記錄誰在該次會議擔任什麼角色</li>
+<li><strong>AGENDA_TEMPLATE</strong>: 儲存議程結構的 JSON 定義</li>
+<li><strong>AGENDA_ITEM</strong>: 議程項目明細</li>
+<li><strong>NOTIFICATION</strong>: 通知記錄</li>
+</ul>
+<h3 id="82-實體關係圖">8.2 實體關係圖 </h3>
+<div class="mermaid">erDiagram
+    CLUB ||--o{ MEMBER : has
+    CLUB ||--o{ AGENDA_TEMPLATE : owns
+    CLUB ||--o{ MEETING : schedules
+    
+    MEMBER {
+        bigint id PK
+        string email
+        string password_hash
+        string role "PLATFORM_ADMIN, CLUB_ADMIN..."
+        string status "ACTIVE, PENDING, REJECTED, SUSPENDED"
+        boolean notification_push
+        boolean notification_email
+        bigint approved_by FK
+        timestamp approved_at
+        text rejection_reason
+    }
+
+    MEETING {
+        bigint id PK
+        date meeting_date
+        time start_time
+        string status "DRAFT, OPEN, CLOSED, FINALIZED, COMPLETED, CANCELLED"
+    }
+
+    ROLE_ASSIGNMENT {
+        bigint id PK
+        bigint meeting_id FK
+        bigint member_id FK
+        string role_name "TME, Timer..."
+        bigint assigned_by FK
+        timestamp assigned_at
+        boolean is_admin_assigned
+    }
+
+    AGENDA_TEMPLATE {
+        bigint id PK
+        string name "Standard Meeting..."
+        json structure "時段設定 JSON"
+    }
+    
+    AGENDA_ITEM {
+        bigint id PK
+        bigint meeting_id FK
+        string title
+        int duration_min
+        string assigned_person_name
+    }
+    
+    NOTIFICATION {
+        bigint id PK
+        bigint user_id FK
+        string type
+        string title
+        text body
+        timestamp read_at
+        timestamp created_at
+    }
+
+    MEETING ||--o{ ROLE_ASSIGNMENT : has
+    MEETING ||--o{ AGENDA_ITEM : contains
+    MEMBER ||--o{ NOTIFICATION : receives
+</div><hr>
+<h2 id="9-技術棧與部署">9. 技術棧與部署 </h2>
+<h3 id="91-技術選型">9.1 技術選型 </h3>
+<table>
+<thead>
+<tr>
+<th>組件</th>
+<th>技術</th>
+<th>Azure 服務</th>
+<th>規格</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Mobile App</strong></td>
+<td>Flutter 3.x, Provider, Dio</td>
+<td>-</td>
+<td>iOS / Android</td>
+</tr>
+<tr>
+<td><strong>MCP Server</strong></td>
+<td>Spring Boot 3.x, JPA</td>
+<td>Container Apps</td>
+<td>0.5 vCPU, 1GB</td>
+</tr>
+<tr>
+<td><strong>Chat Backend</strong></td>
+<td>OpenAI ADK (Python)</td>
+<td>Container Apps</td>
+<td>0.5 vCPU, 1GB</td>
+</tr>
+<tr>
+<td><strong>Database</strong></td>
+<td>Azure SQL</td>
+<td>SQL Database</td>
+<td>Serverless Tier</td>
+</tr>
+<tr>
+<td><strong>AI Model</strong></td>
+<td>GPT-5.1</td>
+<td>AI Foundry</td>
+<td>Standard</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="10-功能雛型畫面">10. 功能雛型畫面 </h2>
+<p>以下為 App 的核心功能畫面設計，採用宮崎駿風格的簡約可愛設計語言。</p>
+<h3 id="101-首頁">10.1 首頁 </h3>
+<p>包含主要功能入口（Make Agenda）與快速導航。</p>
+<p><img src="images/ui_home_mockup_1764873232723.png" alt="Home Screen Mockup"></p>
+<h3 id="102-角色報名">10.2 角色報名 </h3>
+<p>視覺化的角色列表，清晰顯示空缺與已佔用狀態。</p>
+<p><img src="images/ui_role_signup_mockup_1764873251807.png" alt="Role Signup Mockup"></p>
+<h3 id="103-in-app-chat">10.3 In-App Chat </h3>
+<p>對話式操作介面，支援互動式按鈕以簡化確認流程。</p>
+<p><img src="images/ui_chat_mockup_1764873269971.png" alt="Chat Mockup"></p>
+<h3 id="104-議程產生">10.4 議程產生 </h3>
+<p>VPE 專用介面，支援模板選擇與預覽匯出。</p>
+<p><img src="images/ui_agenda_mockup_1764873285990.png" alt="Agenda Mockup"></p>
+<hr>
+<h2 id="附錄">附錄 </h2>
+<h3 id="版本歷史">版本歷史 </h3>
+<ul>
+<li><strong>v1.0</strong> (2025-12-06): 初版完成，包含完整系統架構與功能設計</li>
+<li><strong>v1.1</strong> (2025-12-06): 新增細部流程設計
+<ul>
+<li>新增 Club Admin 可視權限詳細矩陣</li>
+<li>新增 API 資料過濾機制</li>
+<li>新增會員審核狀態機與操作流程</li>
+<li>新增審核通知機制</li>
+<li>新增會議生命週期與編輯權限</li>
+<li>新增角色類型與衝突規則</li>
+<li>新增管理員代理報名流程</li>
+<li>新增模板結構設計（JSON 格式）</li>
+<li>新增 Agenda 狀態與權限</li>
+<li>新增通知系統設計</li>
+<li>更新資料庫設計（補充欄位）</li>
+</ul>
+</li>
+<li><strong>v1.2</strong> (2025-12-06): 新增會議投票機制
+<ul>
+<li>新增第 7 章 Voting System</li>
+<li>新增 TME 控制的投票流程</li>
+<li>新增投票狀態機與權限設計</li>
+<li>新增即時 WebSocket 通訊設計</li>
+<li>新增投票相關資料表（VOTING_SESSION, VOTE, VOTE_RESULT）</li>
+</ul>
+</li>
+</ul>
+
+      </div>
+      
+      
+    
+    
+    <script type="module">
+// TODO: If ZenUML gets integrated into mermaid in the future,
+//      we can remove the following lines.
+
+
+var MERMAID_CONFIG = ({"startOnLoad":false});
+if (typeof MERMAID_CONFIG !== 'undefined') {
+  MERMAID_CONFIG.startOnLoad = false
+  MERMAID_CONFIG.cloneCssStyles = false
+  MERMAID_CONFIG.theme = "default"
+}
+
+mermaid.initialize(MERMAID_CONFIG || {})
+if (typeof(window['Reveal']) !== 'undefined') {
+  function mermaidRevealHelper(event) {
+    var currentSlide = event.currentSlide
+    var diagrams = currentSlide.querySelectorAll('.mermaid')
+    for (var i = 0; i < diagrams.length; i++) {
+      var diagram = diagrams[i]
+      if (!diagram.hasAttribute('data-processed')) {
+        mermaid.init(null, diagram, ()=> {
+          Reveal.slide(event.indexh, event.indexv)
+        })
+      }
+    }
+  }
+  Reveal.addEventListener('slidetransitionend', mermaidRevealHelper)
+  Reveal.addEventListener('ready', mermaidRevealHelper)
+  await mermaid.run({
+    nodes: document.querySelectorAll('.mermaid')
+  })
+} else {
+  await mermaid.run({
+    nodes: document.querySelectorAll('.mermaid')
+  })
+}
+</script>
+    
+    
+    
+  
+    </body></html>
