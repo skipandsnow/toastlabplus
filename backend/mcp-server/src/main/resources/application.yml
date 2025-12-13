@@ -1,0 +1,42 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: toastlabplus-mcp-server
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:34.80.127.183}:5432/${DB_NAME:toastlabplus}?useUnicode=true&characterEncoding=UTF-8
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:ToastLab2024Dev}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+jwt:
+  secret: ${JWT_SECRET:your-256-bit-secret-key-change-in-production-please}
+  expiration: 86400000 # 24 hours in milliseconds
+
+# TODO: 生產環境移除預設值，改用環境變數
+app:
+  admin:
+    email: ${ADMIN_EMAIL:admin@toastlabplus.com}
+    password: ${ADMIN_PASSWORD:Admin@123}
+
+logging:
+  level:
+    root: INFO
+    com.toastlabplus: DEBUG
+    org.springframework.security: DEBUG

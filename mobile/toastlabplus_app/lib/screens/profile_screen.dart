@@ -1,0 +1,254 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../theme/app_theme.dart';
+import '../widgets/hand_drawn_widgets.dart';
+import '../services/auth_service.dart';
+
+class ProfileScreen extends StatelessWidget {
+  const ProfileScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context);
+    final member = authService.member;
+    final name = member?['name'] ?? 'User';
+    final clubName = member?['clubName'] ?? 'No club joined';
+    final role = member?['role'] ?? 'MEMBER';
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
+
+    return Scaffold(
+      backgroundColor: AppTheme.ricePaper,
+      body: CustomPaint(
+        painter: CloudBackgroundPainter(),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
+          child: Column(
+            children: [
+              // Profile Header Card
+              HandDrawnContainer(
+                color: Colors.white,
+                borderColor: AppTheme.lightWood.withValues(alpha: 0.2),
+                borderRadius: 24,
+                padding: const EdgeInsets.all(24),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: AppTheme.sageGreen.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppTheme.sageGreen.withValues(alpha: 0.5),
+                          width: 2,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          initial,
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.sageGreen,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.darkWood,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            clubName,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppTheme.lightWood,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.softPeach.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              role == 'PLATFORM_ADMIN'
+                                  ? 'Platform Admin'
+                                  : role == 'CLUB_ADMIN'
+                                  ? 'Club Admin'
+                                  : 'Member',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.darkWood,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              // Stats
+              Row(
+                children: [
+                  _buildStatCard('Meetings', '0', AppTheme.sageGreen),
+                  const SizedBox(width: 16),
+                  _buildStatCard('Speeches', '0', AppTheme.dustyBlue),
+                  const SizedBox(width: 16),
+                  _buildStatCard('Badges', '0', AppTheme.softPeach),
+                ],
+              ),
+              const SizedBox(height: 32),
+
+              // Menu Options
+              _buildMenuOption(Icons.history_rounded, 'History'),
+              const SizedBox(height: 16),
+              _buildMenuOption(Icons.settings_rounded, 'Settings'),
+              const SizedBox(height: 16),
+              _buildMenuOption(Icons.help_outline_rounded, 'Help & Support'),
+              const SizedBox(height: 32),
+
+              // Logout Button
+              TextButton.icon(
+                onPressed: () async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      alignment: Alignment.topCenter,
+                      insetPadding: const EdgeInsets.only(
+                        top: 80,
+                        left: 24,
+                        right: 24,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      title: const Text(
+                        'Confirm logout?',
+                        textAlign: TextAlign.center,
+                      ),
+                      actionsAlignment: MainAxisAlignment.center,
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancel'),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red.shade400,
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text('Logout'),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (confirmed == true) {
+                    await authService.logout();
+                    // Consumer in main.dart will automatically rebuild
+                  }
+                },
+                icon: Icon(Icons.logout, color: Colors.red.shade400, size: 20),
+                label: Text(
+                  'Logout',
+                  style: TextStyle(
+                    color: Colors.red.shade400,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String label, String value, Color color) {
+    return Expanded(
+      child: HandDrawnContainer(
+        color: Colors.white,
+        borderColor: color.withValues(alpha: 0.3),
+        borderRadius: 16,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(fontSize: 12, color: AppTheme.lightWood),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuOption(IconData icon, String title) {
+    return HandDrawnContainer(
+      color: Colors.white,
+      borderColor: AppTheme.lightWood.withValues(alpha: 0.2),
+      borderRadius: 16,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      onTap: () {},
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppTheme.sageGreen.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: AppTheme.sageGreen, size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.darkWood,
+              ),
+            ),
+          ),
+          Icon(
+            Icons.arrow_forward_ios_rounded,
+            color: AppTheme.lightWood,
+            size: 16,
+          ),
+        ],
+      ),
+    );
+  }
+}
