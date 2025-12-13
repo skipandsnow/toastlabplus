@@ -67,6 +67,7 @@ class _AdminApprovalScreenState extends State<AdminApprovalScreen> {
     );
 
     if (confirmed != true) return;
+    if (!mounted) return;
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
@@ -93,6 +94,7 @@ class _AdminApprovalScreenState extends State<AdminApprovalScreen> {
   Future<void> _rejectMember(int membershipId, String memberName) async {
     final reason = await _showRejectDialog(memberName);
     if (reason == null) return; // User cancelled
+    if (!mounted) return;
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
@@ -314,7 +316,7 @@ class _AdminApprovalScreenState extends State<AdminApprovalScreen> {
                         Icon(
                           Icons.inbox,
                           size: 64,
-                          color: AppTheme.lightWood.withOpacity(0.5),
+                          color: AppTheme.lightWood.withValues(alpha: 0.5),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -353,7 +355,7 @@ class _AdminApprovalScreenState extends State<AdminApprovalScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.darkWood.withOpacity(0.05),
+            color: AppTheme.darkWood.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -368,7 +370,7 @@ class _AdminApprovalScreenState extends State<AdminApprovalScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppTheme.dustyBlue.withOpacity(0.1),
+                  color: AppTheme.dustyBlue.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Center(

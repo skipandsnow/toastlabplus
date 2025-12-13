@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
 import '../config/api_config.dart';
 
 class AuthService extends ChangeNotifier {
@@ -17,7 +18,7 @@ class AuthService extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isLoggedIn => _token != null;
 
-  // Initialize - check for existing token
+  // Initialize - check for existing token and refresh member data
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString(_tokenKey);
@@ -26,6 +27,42 @@ class AuthService extends ChangeNotifier {
       _member = json.decode(memberJson) as Map<String, dynamic>;
     }
     notifyListeners();
+
+    // If logged in, refresh member data from backend to get latest info (e.g., role changes)
+    if (_token != null) {
+      await _refreshMemberData();
+    }
+  }
+
+  /// Refresh member data from backend silently
+  Future<void> _refreshMemberData() async {
+    try {
+      final response = await http
+          .get(
+            Uri.parse(
+              '${ApiConfig.mcpServerBaseUrl}${ApiConfig.authMeEndpoint}',
+            ),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $_token',
+            },
+          )
+          .timeout(ApiConfig.connectionTimeout);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body) as Map<String, dynamic>;
+        _member = data;
+
+        // Update cached member data
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_memberKey, json.encode(data));
+
+        notifyListeners();
+      }
+    } catch (e) {
+      // Silently fail - use cached data if refresh fails
+      debugPrint('Failed to refresh member data: $e');
+    }
   }
 
   // Register new platform member
@@ -166,4 +203,61 @@ class AuthService extends ChangeNotifier {
     'Content-Type': 'application/json',
     if (_token != null) 'Authorization': 'Bearer $_token',
   };
+
+  /// Upload avatar image to server
+  Future<Map<String, dynamic>> uploadAvatar(XFile file) async {
+    if (_token == null || _member == null) {
+      return {'success': false, 'error': 'Not logged in'};
+    }
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final uri = Uri.parse(
+        '${ApiConfig.mcpServerBaseUrl}/api/members/${_member!['id']}/avatar',
+      );
+      final request = http.MultipartRequest('POST', uri);
+      request.headers['Authorization'] = 'Bearer $_token';
+
+      // Handle both web and mobile platforms
+      if (kIsWeb) {
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'file',
+            await file.readAsBytes(),
+            filename: file.name,
+          ),
+        );
+      } else {
+        request.files.add(await http.MultipartFile.fromPath('file', file.path));
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body) as Map<String, dynamic>;
+
+        // Update local member data with new avatar URL
+        final updatedMember = Map<String, dynamic>.from(_member!);
+        updatedMember['avatarUrl'] = data['avatarUrl'];
+        _member = updatedMember;
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_memberKey, json.encode(_member));
+
+        notifyListeners();
+        return {'success': true, 'avatarUrl': data['avatarUrl']};
+      } else {
+        final errorData = json.decode(response.body) as Map<String, dynamic>;
+        return {'success': false, 'error': errorData['error'] ?? response.body};
+      }
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

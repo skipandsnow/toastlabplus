@@ -1,6 +1,8 @@
 package com.toastlabplus.dto;
 
 import com.toastlabplus.entity.Member;
+import java.util.List;
+import java.util.ArrayList;
 
 public class MemberDto {
 
@@ -9,14 +11,20 @@ public class MemberDto {
     private String email;
     private String role;
     private String status;
-    private Long clubId;
-    private String clubName;
+    private Long clubId; // Kept for backward compatibility (first club or null)
+    private String clubName; // Kept for backward compatibility
+    private String avatarUrl;
+    private List<Long> adminClubIds = new ArrayList<>(); // NEW: List of clubs user is admin of
 
     // Constructors
     public MemberDto() {
     }
 
     public static MemberDto fromEntity(Member member) {
+        return fromEntity(member, new ArrayList<>());
+    }
+
+    public static MemberDto fromEntity(Member member, List<Long> adminClubIds) {
         MemberDto dto = new MemberDto();
         dto.setId(member.getId());
         dto.setName(member.getName());
@@ -27,6 +35,8 @@ public class MemberDto {
             dto.setClubId(member.getClub().getId());
             dto.setClubName(member.getClub().getName());
         }
+        dto.setAvatarUrl(member.getAvatarUrl());
+        dto.setAdminClubIds(adminClubIds);
         return dto;
     }
 
@@ -85,5 +95,21 @@ public class MemberDto {
 
     public void setClubName(String clubName) {
         this.clubName = clubName;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+
+    public List<Long> getAdminClubIds() {
+        return adminClubIds;
+    }
+
+    public void setAdminClubIds(List<Long> adminClubIds) {
+        this.adminClubIds = adminClubIds != null ? adminClubIds : new ArrayList<>();
     }
 }

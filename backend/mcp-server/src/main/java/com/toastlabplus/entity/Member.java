@@ -61,6 +61,9 @@ public class Member {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl;
+
     // Constructors
     public Member() {
     }
@@ -200,5 +203,13 @@ public class Member {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 }

@@ -82,13 +82,8 @@ public class MeetingController {
             return ResponseEntity.ok(meeting);
         }
 
-        // Check if meeting is in the same club
-        if (currentMember.getClub() != null && meeting.getClub() != null &&
-                currentMember.getClub().getId().equals(meeting.getClub().getId())) {
-            return ResponseEntity.ok(meeting);
-        }
-
-        return ResponseEntity.status(403).body("Cannot view meetings from other clubs");
+        // Allow any authenticated user to view any meeting
+        return ResponseEntity.ok(meeting);
     }
 
     /**
@@ -102,13 +97,6 @@ public class MeetingController {
             @AuthenticationPrincipal UserDetails userDetails) {
         Member currentMember = memberRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
-
-        // Members can only see their own club's meetings
-        if (!"PLATFORM_ADMIN".equals(currentMember.getRole())) {
-            if (currentMember.getClub() == null || !currentMember.getClub().getId().equals(clubId)) {
-                return ResponseEntity.status(403).body("Cannot view meetings from other clubs");
-            }
-        }
 
         List<Meeting> meetings = meetingRepository.findByClubIdOrderByMeetingDateDesc(clubId);
         return ResponseEntity.ok(meetings);
@@ -143,7 +131,7 @@ public class MeetingController {
         Meeting meeting = new Meeting();
         meeting.setClub(club);
         meeting.setTitle(request.title());
-        meeting.setDescription(request.description());
+        meeting.setTheme(request.description()); // Using theme as description placeholder
         meeting.setMeetingDate(request.meetingDate());
         meeting.setLocation(request.location());
         meeting.setStatus("SCHEDULED");

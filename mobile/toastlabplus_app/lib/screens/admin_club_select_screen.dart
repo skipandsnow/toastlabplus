@@ -98,7 +98,7 @@ class _AdminClubSelectScreenState extends State<AdminClubSelectScreen> {
         leading: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppTheme.dustyBlue.withOpacity(0.1),
+            color: AppTheme.dustyBlue.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(Icons.groups, color: AppTheme.dustyBlue),

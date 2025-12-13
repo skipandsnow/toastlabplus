@@ -1,13 +1,20 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+
+import '../config/api_config.dart';
 import '../theme/app_theme.dart';
 import '../widgets/hand_drawn_widgets.dart';
 import '../services/auth_service.dart';
-import 'roles_screen.dart';
-import 'admin_approval_screen.dart';
-import 'admin_club_select_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+import 'club_detail_management_screen.dart';
+
+import 'club_public_screen.dart';
+import 'create_club_screen.dart';
+import '../widgets/user_header.dart';
+
+class HomeScreen extends StatefulWidget {
   final VoidCallback onChatSelected;
   final VoidCallback onSettingsSelected;
 
@@ -18,14 +25,51 @@ class HomeScreen extends StatelessWidget {
   });
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  List<dynamic> _clubs = [];
+  bool _isLoadingClubs = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadClubs();
+  }
+
+  Future<void> _loadClubs() async {
+    setState(() => _isLoadingClubs = true);
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final response = await http.get(
+        Uri.parse('${ApiConfig.mcpServerBaseUrl}${ApiConfig.clubsEndpoint}'),
+        headers: authService.authHeaders,
+      );
+
+      if (response.statusCode == 200) {
+        if (mounted) {
+          setState(() {
+            _clubs = json.decode(response.body) as List<dynamic>;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading clubs: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingClubs = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
     final member = authService.member;
-    final userName = member?['name']?.split(' ').first ?? 'User';
     final role = member?['role'] ?? 'MEMBER';
-    final clubId = member?['clubId'] as int?;
-    final clubName = member?['clubName'] as String? ?? 'My Club';
-    final isAdmin = role == 'CLUB_ADMIN' || role == 'PLATFORM_ADMIN';
+    final adminClubIds = member?['adminClubIds'] as List<dynamic>? ?? [];
+
+    final isPlatformAdmin = role == 'PLATFORM_ADMIN';
+    final isClubAdmin = adminClubIds.isNotEmpty;
 
     return Scaffold(
       backgroundColor: AppTheme.ricePaper,
@@ -38,132 +82,60 @@ class HomeScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Header
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: AppTheme.sageGreen.withValues(
-                        alpha: 0.2,
-                      ),
-                      child: Text(
-                        userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.sageGreen,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _getGreeting(),
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppTheme.lightWood,
-                          ),
-                        ),
-                        Text(
-                          userName,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.darkWood,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isAdmin
-                            ? AppTheme.dustyBlue.withOpacity(0.2)
-                            : AppTheme.sageGreen.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        role == 'PLATFORM_ADMIN'
-                            ? 'Platform Admin'
-                            : role == 'CLUB_ADMIN'
-                            ? 'Club Admin'
-                            : 'Member',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: isAdmin
-                              ? AppTheme.dustyBlue
-                              : AppTheme.sageGreen,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                UserHeader(onMembershipChanged: _loadClubs),
 
-                // Admin Approval Card (for all admins)
-                if (isAdmin) ...[
-                  const SizedBox(height: 20),
+                // PLATFORM ADMIN DASHBOARD
+                if (isPlatformAdmin) ...[
+                  const SizedBox(height: 32),
+                  // Create Club Block
                   HandDrawnContainer(
-                    color: AppTheme.dustyBlue.withOpacity(0.1),
-                    borderColor: AppTheme.dustyBlue,
-                    borderRadius: 16,
-                    padding: const EdgeInsets.all(16),
+                    color: AppTheme.sageGreen.withValues(alpha: 0.1),
+                    borderColor: AppTheme.sageGreen,
+                    borderRadius: 24,
+                    padding: const EdgeInsets.all(24),
                     onTap: () {
-                      if (clubId != null) {
-                        // Club Admin - go directly to approval screen
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => AdminApprovalScreen(
-                              clubId: clubId,
-                              clubName: clubName,
+                      Navigator.of(context)
+                          .push(
+                            MaterialPageRoute(
+                              builder: (_) => const CreateClubScreen(),
                             ),
-                          ),
-                        );
-                      } else {
-                        // Platform Admin - select club first
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const AdminClubSelectScreen(),
-                          ),
-                        );
-                      }
+                          )
+                          .then((result) {
+                            if (result == true) _loadClubs();
+                          });
                     },
                     child: Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(10),
+                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppTheme.dustyBlue.withOpacity(0.2),
+                            color: AppTheme.sageGreen,
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(
-                            Icons.person_add,
-                            color: AppTheme.dustyBlue,
+                          child: const Icon(
+                            Icons.add_business_rounded,
+                            color: Colors.white,
+                            size: 32,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 20),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Member Approval',
+                                'Create Club',
                                 style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
                                   color: AppTheme.darkWood,
                                 ),
                               ),
+                              const SizedBox(height: 4),
                               Text(
-                                clubId != null
-                                    ? 'Review pending member applications'
-                                    : 'Select a club to approve',
+                                'Start a new branch',
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 14,
                                   color: AppTheme.lightWood,
                                 ),
                               ),
@@ -172,227 +144,566 @@ class HomeScreen extends StatelessWidget {
                         ),
                         Icon(
                           Icons.arrow_forward_ios,
-                          size: 16,
-                          color: AppTheme.lightWood,
+                          color: AppTheme.sageGreen,
+                          size: 20,
                         ),
                       ],
                     ),
                   ),
-                ],
 
-                const SizedBox(height: 32),
+                  const SizedBox(height: 32),
 
-                // Main "Make Agenda" Card - Refined
-                HandDrawnContainer(
-                  color: const Color(0xFFF1F8E9), // Very light green
-                  borderColor: AppTheme.sageGreen,
-                  borderRadius: 24,
-                  padding: const EdgeInsets.all(24),
-                  onTap: () {},
-                  child: Row(
+                  // CLUB MANAGEMENT LIST (Replaces standard list and menu)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppTheme.sageGreen,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Text(
-                                'Next Meeting',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Make Agenda',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                                color: AppTheme.darkWood,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Create new program',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: AppTheme.lightWood,
-                              ),
-                            ),
-                          ],
+                      Text(
+                        'Club Management',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.darkWood,
                         ),
                       ),
-                      Icon(
-                        Icons.edit_calendar_rounded,
-                        size: 48,
-                        color: AppTheme.sageGreen.withValues(alpha: 0.8),
+                      IconButton(
+                        icon: Icon(Icons.settings, color: AppTheme.dustyBlue),
+                        onPressed: widget.onSettingsSelected,
+                        tooltip: 'Settings',
                       ),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 16),
 
-                const SizedBox(height: 32),
-
-                Text(
-                  'Menu', // Keep English as design choice
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.darkWood,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Tightly grouped buttons (Center aligned as per latest fix)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildMenuButton(
-                      context,
-                      'Club Info',
-                      Icons.storefront_rounded,
-                      AppTheme.dustyBlue,
-                      onTap: () {
-                        // TODO: Navigate to club info
-                      },
-                    ),
-                    const SizedBox(width: 16), // Tighter spacing
-                    _buildMenuButton(
-                      context,
-                      'Roles',
-                      Icons.groups_rounded,
-                      AppTheme.sageGreen,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const RolesScreen(),
+                  if (_isLoadingClubs)
+                    const Center(child: CircularProgressIndicator())
+                  else if (_clubs.isEmpty)
+                    HandDrawnContainer(
+                      color: Colors.white,
+                      borderColor: AppTheme.lightWood,
+                      child: const Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Text("No clubs found."),
+                      ),
+                    )
+                  else
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _clubs.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 16),
+                      itemBuilder: (context, index) {
+                        final club = _clubs[index];
+                        return HandDrawnContainer(
+                          color: Colors.white,
+                          borderColor:
+                              AppTheme.dustyBlue, // Blue for management
+                          borderRadius: 20,
+                          onTap: () {
+                            // Navigate to Club Detail MANAGEMENT Screen
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => ClubDetailManagementScreen(
+                                  clubId: club['id'] as int,
+                                  clubName: club['name'] ?? 'Club',
+                                ),
+                              ),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.dustyBlue.withValues(
+                                      alpha: 0.1,
+                                    ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.admin_panel_settings_rounded,
+                                    color: AppTheme.dustyBlue,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        club['name'] ?? 'Club',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.darkWood,
+                                        ),
+                                      ),
+                                      if (club['description'] != null)
+                                        Text(
+                                          club['description'],
+                                          style: TextStyle(
+                                            color: AppTheme.lightWood,
+                                            fontSize: 12,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.edit_rounded,
+                                  size: 20,
+                                  color: AppTheme.dustyBlue,
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },
                     ),
-                    const SizedBox(width: 16),
-                    _buildMenuButton(
-                      context,
-                      'Voting',
-                      Icons.how_to_vote_rounded,
-                      AppTheme.softPeach,
-                      onTap: () {
-                        // TODO: Navigate to voting
+                ],
+                // Start public list logic directly (previous block removed)
+
+                // Public CLUBS list and MENU (Only if NOT Platform Admin)
+                // Platform Admin has its own list above.
+                if (!isPlatformAdmin) ...[
+                  const SizedBox(height: 32),
+
+                  if (isClubAdmin) ...[
+                    // --- MANAGED CLUBS SECTION ---
+                    Text(
+                      'Managed Clubs',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.darkWood,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Builder(
+                      builder: (context) {
+                        // Find clubs I manage (using adminClubIds list)
+                        final adminClubIds =
+                            member?['adminClubIds'] as List<dynamic>? ?? [];
+                        final managedClubs = _clubs
+                            .where((c) => adminClubIds.contains(c['id']))
+                            .toList();
+
+                        if (managedClubs.isEmpty) {
+                          return const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text("No managed clubs."),
+                          );
+                        }
+
+                        return ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: managedClubs.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 16),
+                          itemBuilder: (context, index) {
+                            final club = managedClubs[index];
+                            return HandDrawnContainer(
+                              color: Colors.white,
+                              borderColor: AppTheme.dustyBlue,
+                              borderRadius: 20,
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => ClubDetailManagementScreen(
+                                      clubId: club['id'] as int,
+                                      clubName: club['name'] ?? 'Club',
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.dustyBlue.withValues(
+                                          alpha: 0.1,
+                                        ),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.admin_panel_settings_rounded,
+                                        color: AppTheme.dustyBlue,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppTheme.dustyBlue
+                                                  .withValues(alpha: 0.2),
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              'Club Admin',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppTheme.dustyBlue,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            club['name'] ?? 'Club',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppTheme.darkWood,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.edit_rounded,
+                                      color: AppTheme.dustyBlue,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // --- JOINED CLUBS SECTION ---
+                    Text(
+                      'Joined Clubs',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.darkWood,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Builder(
+                      builder: (context) {
+                        // Find clubs I am a member of (Using same clubId for now as 1-club limit)
+                        final myClubId = member?['clubId'];
+                        final joinedClubs = _clubs
+                            .where((c) => c['id'] == myClubId)
+                            .toList();
+
+                        if (joinedClubs.isEmpty) {
+                          return const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text("No joined clubs."),
+                          );
+                        }
+
+                        return ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: joinedClubs.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 16),
+                          itemBuilder: (context, index) {
+                            final club = joinedClubs[index];
+                            return HandDrawnContainer(
+                              color: Colors.white,
+                              borderColor: AppTheme.sageGreen,
+                              borderRadius: 20,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ClubPublicScreen(
+                                      clubId: club['id'] as int,
+                                      clubName: club['name'] ?? 'Club',
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.sageGreen.withValues(
+                                          alpha: 0.1,
+                                        ),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.groups,
+                                        color: AppTheme.sageGreen,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Text(
+                                        club['name'] ?? 'Club',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.darkWood,
+                                        ),
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.arrow_forward_ios,
+                                      size: 16,
+                                      color: AppTheme.lightWood,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ] else ...[
+                    // --- REGULAR MEMBER VIEW ---
+
+                    // 1. My Joined Clubs
+                    Text(
+                      'My Clubs',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.darkWood,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Builder(
+                      builder: (context) {
+                        final myClubId = member?['clubId'];
+                        // Filter joined clubs
+                        final joinedClubs = _clubs
+                            .where((c) => c['id'] == myClubId)
+                            .toList();
+
+                        if (joinedClubs.isEmpty) {
+                          return HandDrawnContainer(
+                            color: Colors.white,
+                            borderColor: AppTheme.lightWood,
+                            child: const Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: Text("You haven't joined any clubs yet."),
+                            ),
+                          );
+                        }
+
+                        return ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: joinedClubs.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 16),
+                          itemBuilder: (context, index) {
+                            final club = joinedClubs[index];
+                            return HandDrawnContainer(
+                              color: Colors.white,
+                              borderColor: AppTheme.sageGreen,
+                              borderRadius: 20,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ClubPublicScreen(
+                                      clubId: club['id'] as int,
+                                      clubName: club['name'] ?? 'Club',
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.sageGreen.withValues(
+                                          alpha: 0.1,
+                                        ),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.star,
+                                        color: AppTheme.sageGreen,
+                                      ), // Star for my club
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Text(
+                                        club['name'] ?? 'Club',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppTheme.darkWood,
+                                        ),
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.arrow_forward_ios,
+                                      size: 16,
+                                      color: AppTheme.lightWood,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // 2. All Clubs List (Excluding Joined)
+                    Text(
+                      'All Clubs',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.darkWood,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Builder(
+                      builder: (context) {
+                        final myClubId = member?['clubId'];
+                        // Filter to exclude joined clubs
+                        final otherClubs = _clubs
+                            .where((c) => c['id'] != myClubId)
+                            .toList();
+
+                        if (_isLoadingClubs) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        } else if (otherClubs.isEmpty) {
+                          return HandDrawnContainer(
+                            color: Colors.white,
+                            borderColor: AppTheme.lightWood,
+                            child: const Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: Text("No other clubs available."),
+                            ),
+                          );
+                        }
+
+                        return ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: otherClubs.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 16),
+                          itemBuilder: (context, index) {
+                            final club = otherClubs[index];
+                            return HandDrawnContainer(
+                              color: Colors.white,
+                              borderColor: AppTheme.sageGreen.withValues(
+                                alpha: 0.5,
+                              ), // Softer border for general list
+                              borderRadius: 20,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ClubPublicScreen(
+                                      clubId: club['id'] as int,
+                                      clubName: club['name'] ?? 'Club',
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.sageGreen.withValues(
+                                          alpha: 0.1,
+                                        ),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.groups,
+                                        color: AppTheme.sageGreen,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            club['name'] ?? 'Club',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppTheme.darkWood,
+                                            ),
+                                          ),
+                                          if (club['description'] != null)
+                                            Text(
+                                              club['description'],
+                                              style: TextStyle(
+                                                color: AppTheme.lightWood,
+                                                fontSize: 12,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.arrow_forward_ios,
+                                      size: 16,
+                                      color: AppTheme.lightWood,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        );
                       },
                     ),
                   ],
-                ),
-
-                const SizedBox(height: 40),
-
-                // Upcoming Section (Production Feature)
-                Text(
-                  'Coming Up',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.darkWood,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                HandDrawnContainer(
-                  color: Colors.white,
-                  borderColor: AppTheme.lightWood.withValues(alpha: 0.3),
-                  borderRadius: 20,
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppTheme.softYellow.withValues(alpha: 0.5),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.event_note_rounded,
-                          color: AppTheme.darkWood.withValues(alpha: 0.7),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Speech Contest',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.darkWood,
-                            ),
-                          ),
-                          Text(
-                            'Dec 20 • 19:00',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: AppTheme.lightWood,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+                ],
+                // Add lots of space for scrolling to work comfortably
+                const SizedBox(height: 100),
               ],
             ),
           ),
         ),
       ),
     );
-  }
-
-  Widget _buildMenuButton(
-    BuildContext context,
-    String label,
-    IconData icon,
-    Color color, {
-    VoidCallback? onTap,
-  }) {
-    return Column(
-      children: [
-        HandDrawnContainer(
-          color: color.withValues(alpha: 0.15),
-          borderColor: color.withValues(alpha: 0.5), // Softer border
-          borderRadius: 22, // Squircle
-          padding: EdgeInsets.zero,
-          onTap: onTap,
-          child: SizedBox(
-            width: 80,
-            height: 80,
-            child: Center(child: Icon(icon, color: color, size: 32)),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.darkWood,
-          ),
-        ),
-      ],
-    );
-  }
-
-  String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good Morning,';
-    if (hour < 17) return 'Good Afternoon,';
-    return 'Good Evening,';
   }
 }

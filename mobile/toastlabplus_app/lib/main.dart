@@ -80,7 +80,7 @@ class ClubSelectionWrapper extends StatelessWidget {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: AppTheme.dustyBlue.withOpacity(0.2),
+                  color: AppTheme.dustyBlue.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                   border: Border.all(color: AppTheme.dustyBlue, width: 2),
                 ),
@@ -112,7 +112,7 @@ class ClubSelectionWrapper extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: AppTheme.sageGreen.withOpacity(0.2),
+                  color: AppTheme.sageGreen.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(

@@ -128,3 +128,8 @@ Thumbs.db
 .env.local
 .env.*.local
 *.pem
+
+# GCP Service Account Keys (SENSITIVE - DO NOT COMMIT)
+**/gcp-*.json
+**/gcp-key.json
+**/gcp-storage-key.json

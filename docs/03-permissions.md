@@ -104,6 +104,88 @@ sequenceDiagram
 - **Treasurer** (財務長)
 - **SAA** (場控)
 
+## 3.7 多分會管理架構 (Multi-Club Admin)
+
+> **v1.8 更新** (2025-12-13): 支援一位使用者同時管理多個分會
+
+### 資料庫設計
+
+系統採用「混合方案」支援多分會管理：
+
+```mermaid
+erDiagram
+    member ||--o{ club_admin : "administers"
+    club ||--o{ club_admin : "managed by"
+    member ||--o{ club_membership : "joins"
+    club ||--o{ club_membership : "has"
+    
+    member {
+        bigint id PK
+        string email UK
+        string name
+        string role "PLATFORM_ADMIN/CLUB_ADMIN/MEMBER"
+        bigint club_id FK "主要關聯分會"
+        string status "PENDING/APPROVED"
+    }
+    
+    club_admin {
+        bigint id PK
+        bigint member_id FK
+        bigint club_id FK
+        timestamp assigned_at
+        bigint assigned_by FK
+    }
+    
+    club_membership {
+        bigint id PK
+        bigint member_id FK
+        bigint club_id FK
+        string status "PENDING/APPROVED/REJECTED"
+    }
+```
+
+### 權限判斷邏輯
+
+| 欄位 | 用途 | 說明 |
+|------|------|------|
+| `member.role` | Spring Security | `@PreAuthorize("hasRole('CLUB_ADMIN')")` 權限檢查 |
+| `member.club` | 向後兼容 | 主要關聯的分會 (第一個被指派的 club) |
+| `club_admin` 表 | 多分會追蹤 | 所有管理的分會記錄 |
+| `adminClubIds` | API 回傳 | 前端顯示管理的分會列表 |
+
+### 指派 Club Admin 流程
+
+```mermaid
+sequenceDiagram
+    participant PA as Platform Admin
+    participant API as MCP Server
+    participant DB
+    
+    PA->>API: PUT /api/members/{id}/assign-club-admin
+    Note right of PA: { "clubId": 123 }
+    
+    API->>DB: 建立 club_admin 記錄
+    API->>DB: member.role = 'CLUB_ADMIN'
+    API->>DB: member.club = 指派的 club
+    API->>DB: 自動建立 club_membership (APPROVED)
+    
+    API-->>PA: 回傳 MemberDto
+    Note left of API: 含 adminClubIds 列表
+```
+
+### 前端顯示邏輯
+
+```dart
+// HomeScreen 判斷是否為 Club Admin
+final adminClubIds = member?['adminClubIds'] as List<dynamic>? ?? [];
+final isClubAdmin = adminClubIds.isNotEmpty;
+
+// 過濾管理的分會
+final managedClubs = _clubs
+    .where((c) => adminClubIds.contains(c['id']))
+    .toList();
+```
+
 ---
 
 [下一章：會議管理細部流程 →](./04-meeting-management.md)

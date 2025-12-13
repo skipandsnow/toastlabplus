@@ -102,6 +102,7 @@ class _ClubMembershipScreenState extends State<ClubMembershipScreen> {
     );
 
     if (confirmed != true) return;
+    if (!mounted) return;
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
@@ -155,6 +156,67 @@ class _ClubMembershipScreenState extends State<ClubMembershipScreen> {
       } else {
         final data = json.decode(response.body);
         _showError(data['error'] ?? 'Application failed');
+      }
+    } catch (e) {
+      _showError(e.toString());
+    }
+  }
+
+  Future<void> _leaveClub(int membershipId, String clubName) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        alignment: Alignment.topCenter,
+        insetPadding: const EdgeInsets.only(top: 80, left: 24, right: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Column(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 48),
+            const SizedBox(height: 12),
+            const Text('Leave Club', textAlign: TextAlign.center),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to leave "$clubName"?',
+          textAlign: TextAlign.center,
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade400,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Leave'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+    if (!mounted) return;
+
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final response = await http.delete(
+        Uri.parse(
+          '${ApiConfig.mcpServerBaseUrl}${ApiConfig.clubMembershipsEndpoint}/$membershipId',
+        ),
+        headers: authService.authHeaders,
+      );
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        _loadData(); // Refresh list
+      } else {
+        final data = json.decode(response.body);
+        _showError(data['error'] ?? 'Failed to leave club');
       }
     } catch (e) {
       _showError(e.toString());
@@ -301,54 +363,91 @@ class _ClubMembershipScreenState extends State<ClubMembershipScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.darkWood.withOpacity(0.05),
+            color: AppTheme.darkWood.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(statusIcon, color: statusColor),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  membership['clubName'] ?? 'Club',
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(statusIcon, color: statusColor),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      membership['clubName'] ?? 'Club',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.darkWood,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Applied: ${membership['appliedAt'] ?? '-'}',
+                      style: TextStyle(fontSize: 12, color: AppTheme.lightWood),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  statusText,
                   style: TextStyle(
-                    fontSize: 16,
+                    color: statusColor,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.darkWood,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Applied: ${membership['appliedAt'] ?? '-'}',
-                  style: TextStyle(fontSize: 12, color: AppTheme.lightWood),
+              ),
+            ],
+          ),
+          if (status == 'APPROVED' || status == 'PENDING') ...[
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _leaveClub(
+                  membership['id'] as int,
+                  membership['clubName'] ?? 'Club',
                 ),
-              ],
+                icon: Icon(
+                  Icons.exit_to_app,
+                  size: 18,
+                  color: Colors.red.shade400,
+                ),
+                label: Text(
+                  status == 'PENDING' ? 'Cancel Application' : 'Leave Club',
+                  style: TextStyle(color: Colors.red.shade400),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.red.shade200),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
             ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              statusText,
-              style: TextStyle(color: statusColor, fontWeight: FontWeight.bold),
-            ),
-          ),
+          ],
         ],
       ),
     );
@@ -367,7 +466,7 @@ class _ClubMembershipScreenState extends State<ClubMembershipScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.darkWood.withOpacity(0.05),
+            color: AppTheme.darkWood.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -378,7 +477,7 @@ class _ClubMembershipScreenState extends State<ClubMembershipScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppTheme.dustyBlue.withOpacity(0.1),
+              color: AppTheme.dustyBlue.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(Icons.groups, color: AppTheme.dustyBlue),
@@ -412,7 +511,7 @@ class _ClubMembershipScreenState extends State<ClubMembershipScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: AppTheme.lightWood.withOpacity(0.1),
+                color: AppTheme.lightWood.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(

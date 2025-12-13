@@ -150,3 +150,40 @@ class CloudBackgroundPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
+class HandDrawnButton extends StatelessWidget {
+  final String text;
+  final VoidCallback onPressed;
+  final Color color;
+  final Color textColor;
+  final double width;
+
+  const HandDrawnButton({
+    super.key,
+    required this.text,
+    required this.onPressed,
+    this.color = const Color(0xFFE5AFA0),
+    this.textColor = const Color(0xFF4A4036),
+    this.width = double.infinity,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return HandDrawnContainer(
+      color: color,
+      onTap: onPressed,
+      child: Container(
+        width: width,
+        alignment: Alignment.center,
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ),
+        ),
+      ),
+    );
+  }
+}

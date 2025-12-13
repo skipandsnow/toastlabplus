@@ -43,16 +43,37 @@ class ProfileScreen extends StatelessWidget {
                           width: 2,
                         ),
                       ),
-                      child: Center(
-                        child: Text(
-                          initial,
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.sageGreen,
-                          ),
-                        ),
-                      ),
+                      child: member?['avatarUrl'] != null
+                          ? ClipOval(
+                              child: Image.network(
+                                member!['avatarUrl'],
+                                width: 72,
+                                height: 72,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Center(
+                                    child: Text(
+                                      initial,
+                                      style: TextStyle(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.sageGreen,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            )
+                          : Center(
+                              child: Text(
+                                initial,
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.sageGreen,
+                                ),
+                              ),
+                            ),
                     ),
                     const SizedBox(width: 20),
                     Expanded(
