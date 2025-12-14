@@ -10,33 +10,38 @@ public class MemberDto {
     private String name;
     private String email;
     private String role;
-    private String status;
-    private Long clubId; // Kept for backward compatibility (first club or null)
-    private String clubName; // Kept for backward compatibility
     private String avatarUrl;
-    private List<Long> adminClubIds = new ArrayList<>(); // NEW: List of clubs user is admin of
+    private List<Long> adminClubIds = new ArrayList<>(); // Clubs user is admin of
+    private List<Long> memberClubIds = new ArrayList<>(); // Clubs user has joined (APPROVED membership)
+    private List<Long> pendingClubIds = new ArrayList<>(); // Clubs user has applied to (PENDING status)
 
     // Constructors
     public MemberDto() {
     }
 
     public static MemberDto fromEntity(Member member) {
-        return fromEntity(member, new ArrayList<>());
+        return fromEntity(member, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     }
 
     public static MemberDto fromEntity(Member member, List<Long> adminClubIds) {
+        return fromEntity(member, adminClubIds, new ArrayList<>(), new ArrayList<>());
+    }
+
+    public static MemberDto fromEntity(Member member, List<Long> adminClubIds, List<Long> memberClubIds) {
+        return fromEntity(member, adminClubIds, memberClubIds, new ArrayList<>());
+    }
+
+    public static MemberDto fromEntity(Member member, List<Long> adminClubIds, List<Long> memberClubIds,
+            List<Long> pendingClubIds) {
         MemberDto dto = new MemberDto();
         dto.setId(member.getId());
         dto.setName(member.getName());
         dto.setEmail(member.getEmail());
         dto.setRole(member.getRole());
-        dto.setStatus(member.getStatus());
-        if (member.getClub() != null) {
-            dto.setClubId(member.getClub().getId());
-            dto.setClubName(member.getClub().getName());
-        }
         dto.setAvatarUrl(member.getAvatarUrl());
         dto.setAdminClubIds(adminClubIds);
+        dto.setMemberClubIds(memberClubIds);
+        dto.setPendingClubIds(pendingClubIds);
         return dto;
     }
 
@@ -73,30 +78,6 @@ public class MemberDto {
         this.role = role;
     }
 
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public Long getClubId() {
-        return clubId;
-    }
-
-    public void setClubId(Long clubId) {
-        this.clubId = clubId;
-    }
-
-    public String getClubName() {
-        return clubName;
-    }
-
-    public void setClubName(String clubName) {
-        this.clubName = clubName;
-    }
-
     public String getAvatarUrl() {
         return avatarUrl;
     }
@@ -111,5 +92,21 @@ public class MemberDto {
 
     public void setAdminClubIds(List<Long> adminClubIds) {
         this.adminClubIds = adminClubIds != null ? adminClubIds : new ArrayList<>();
+    }
+
+    public List<Long> getMemberClubIds() {
+        return memberClubIds;
+    }
+
+    public void setMemberClubIds(List<Long> memberClubIds) {
+        this.memberClubIds = memberClubIds != null ? memberClubIds : new ArrayList<>();
+    }
+
+    public List<Long> getPendingClubIds() {
+        return pendingClubIds;
+    }
+
+    public void setPendingClubIds(List<Long> pendingClubIds) {
+        this.pendingClubIds = pendingClubIds != null ? pendingClubIds : new ArrayList<>();
     }
 }

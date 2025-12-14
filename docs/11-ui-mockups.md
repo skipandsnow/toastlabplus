@@ -1,6 +1,6 @@
 # 11. 功能雛型畫面
 
-[← 返回目錄](./README.md) | [← 上一章](./10-deployment.md)
+[← 返回目錄](../README.md) | [← 上一章](./10-deployment.md)
 
 ---
 
@@ -73,6 +73,12 @@ App 內通知列表，顯示未讀通知與歷史記錄。
 對話式操作介面，支援互動式按鈕以簡化確認流程。
 
 ![Chat](../images/ui_chat.png)
+
+## 11.11 Club Public Screen
+
+公開的社團資訊頁面，顯示社團地點、會議時間範圍、聯絡人資訊，以及近期活動列表。
+
+![Club Public Screen](../images/ui_club_public.png)
 
 ---
 

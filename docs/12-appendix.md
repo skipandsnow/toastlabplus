@@ -1,6 +1,6 @@
 # 附錄
 
-[← 返回目錄](./README.md) | [← 上一章](./11-ui-mockups.md)
+[← 返回目錄](../README.md) | [← 上一章](./11-ui-mockups.md)
 
 ---
 

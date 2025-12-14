@@ -1,6 +1,6 @@
 # 9. 資料庫設計
 
-[← 返回目錄](./README.md) | [← 上一章](./08-notification.md)
+[← 返回目錄](../README.md) | [← 上一章](./08-notification.md)
 
 ---
 
@@ -22,6 +22,21 @@ erDiagram
     CLUB ||--o{ AGENDA_TEMPLATE : owns
     CLUB ||--o{ MEETING : schedules
     
+    CLUB {
+        bigint id PK
+        string name
+        string description
+        string location
+        string meeting_day
+        string meeting_time
+        time meeting_end_time
+        string contact_email
+        string contact_phone
+        string contact_person
+        timestamp created_at
+        timestamp updated_at
+    }
+
     MEMBER {
         bigint id PK
         string email

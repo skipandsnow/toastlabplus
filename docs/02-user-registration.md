@@ -1,6 +1,6 @@
 # 2. 使用者註冊與身分選擇
 
-[← 返回目錄](./README.md) | [← 上一章](./01-architecture.md)
+[← 返回目錄](../README.md) | [← 上一章](./01-architecture.md)
 
 ---
 

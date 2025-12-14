@@ -24,4 +24,10 @@ public interface ClubAdminRepository extends JpaRepository<ClubAdmin, Long> {
 
     // Delete by member and club
     void deleteByMemberIdAndClubId(Long memberId, Long clubId);
+
+    // Check if a member is admin of ANY club (for Spring Security)
+    boolean existsByMemberId(Long memberId);
+
+    // Delete all admins of a club
+    void deleteByClubId(Long clubId);
 }

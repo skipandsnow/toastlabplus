@@ -44,7 +44,6 @@ public class MemberController {
 
     /**
      * Upload avatar image for a member.
-     * The image is stored in GCP Cloud Storage.
      */
     @PostMapping(value = "/{id}/avatar", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
@@ -56,39 +55,33 @@ public class MemberController {
         if (storageService == null) {
             return ResponseEntity.status(503).body(java.util.Map.of(
                     "error", "Avatar upload is not available",
-                    "message", "GCP Storage is not configured. Set GCP_STORAGE_ENABLED=true and provide credentials."));
+                    "message", "GCP Storage is not configured."));
         }
 
         Member member = memberRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
 
-        // Security check: only allow updating own avatar
         if (!member.getEmail().equals(userDetails.getUsername())) {
             return ResponseEntity.status(403).body(java.util.Map.of("error", "Can only update your own avatar"));
         }
 
         try {
-            // Delete old avatar if exists
             if (member.getAvatarUrl() != null) {
                 storageService.deleteFile(member.getAvatarUrl());
             }
-
             String avatarUrl = storageService.uploadFile(file, "avatars");
             member.setAvatarUrl(avatarUrl);
             memberRepository.save(member);
-
             return ResponseEntity.ok(java.util.Map.of("avatarUrl", avatarUrl));
         } catch (java.io.IOException e) {
             return ResponseEntity.internalServerError().body(java.util.Map.of(
-                    "error", "Failed to upload avatar",
-                    "message", e.getMessage()));
+                    "error", "Failed to upload avatar", "message", e.getMessage()));
         }
     }
 
     /**
      * Assign a member as Club Admin for a specific club.
      * Only Platform Admin can perform this.
-     * This also adds them as a member of the club if not already.
      */
     @PutMapping("/{id}/assign-club-admin")
     @PreAuthorize("hasRole('PLATFORM_ADMIN')")
@@ -108,29 +101,17 @@ public class MemberController {
         com.toastlabplus.entity.Club club = clubRepository.findById(clubId)
                 .orElseThrow(() -> new IllegalArgumentException("Club not found"));
 
-        // Check if already admin of this club
         if (clubAdminRepository.existsByMemberIdAndClubId(id, clubId)) {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", "Already admin of this club"));
         }
 
-        // Get current user for assigned_by
-        Member currentUser = memberRepository.findByEmail(userDetails.getUsername())
-                .orElse(null);
+        Member currentUser = memberRepository.findByEmail(userDetails.getUsername()).orElse(null);
 
-        // Create ClubAdmin record
+        // Create ClubAdmin record (this is the only thing needed now)
         ClubAdmin clubAdmin = new ClubAdmin(member, club, currentUser);
         clubAdminRepository.save(clubAdmin);
 
-        // Set member.role = CLUB_ADMIN for Spring Security @PreAuthorize compatibility
-        // Also set member.club to this club (will be the "primary" club for this admin)
-        if (!"PLATFORM_ADMIN".equals(member.getRole())) {
-            member.setRole("CLUB_ADMIN");
-            member.setClub(club);
-            member.setStatus("APPROVED");
-            memberRepository.save(member);
-        }
-
-        // Auto-create ClubMembership if not exists (APPROVED status)
+        // Auto-create ClubMembership if not exists
         if (!clubMembershipRepository.existsByMemberIdAndClubId(id, clubId)) {
             ClubMembership membership = new ClubMembership();
             membership.setMember(member);
@@ -139,17 +120,11 @@ public class MemberController {
             clubMembershipRepository.save(membership);
         }
 
-        // Get updated admin club IDs
-        List<Long> adminClubIds = clubAdminRepository.findByMemberId(id).stream()
-                .map(ca -> ca.getClub().getId())
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(MemberDto.fromEntity(member, adminClubIds));
+        return ResponseEntity.ok(MemberDto.fromEntity(member, getAdminClubIds(id)));
     }
 
     /**
      * Remove Club Admin role from a member for a specific club.
-     * Only Platform Admin can perform this.
      */
     @PutMapping("/{id}/remove-club-admin")
     @PreAuthorize("hasRole('PLATFORM_ADMIN')")
@@ -165,32 +140,16 @@ public class MemberController {
         Member member = memberRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
 
-        // Check if actually admin of this club
         if (!clubAdminRepository.existsByMemberIdAndClubId(id, clubId)) {
             return ResponseEntity.badRequest().body(java.util.Map.of("error", "Not admin of this club"));
         }
 
-        // Remove ClubAdmin record
         clubAdminRepository.deleteByMemberIdAndClubId(id, clubId);
-
-        // Get updated admin club IDs
-        List<Long> adminClubIds = clubAdminRepository.findByMemberId(id).stream()
-                .map(ca -> ca.getClub().getId())
-                .collect(Collectors.toList());
-
-        // If no more clubs to admin, reset role to MEMBER
-        if (adminClubIds.isEmpty() && "CLUB_ADMIN".equals(member.getRole())) {
-            member.setRole("MEMBER");
-            member.setClub(null);
-            memberRepository.save(member);
-        }
-
-        return ResponseEntity.ok(MemberDto.fromEntity(member, adminClubIds));
+        return ResponseEntity.ok(MemberDto.fromEntity(member, getAdminClubIds(id)));
     }
 
     /**
-     * Get members of the current user's club only.
-     * Platform Admin can see all members.
+     * Get all members (for Platform Admin).
      */
     @GetMapping
     @PreAuthorize("isAuthenticated()")
@@ -198,28 +157,17 @@ public class MemberController {
         Member currentMember = memberRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
 
-        List<MemberDto> members;
-
-        // Platform Admin can see all members
         if ("PLATFORM_ADMIN".equals(currentMember.getRole())) {
-            members = memberRepository.findAll().stream()
+            List<MemberDto> members = memberRepository.findAll().stream()
                     .map(MemberDto::fromEntity)
                     .collect(Collectors.toList());
-        } else if (currentMember.getClub() != null) {
-            // Other users can only see members of their own club
-            members = memberRepository.findByClubId(currentMember.getClub().getId()).stream()
-                    .map(MemberDto::fromEntity)
-                    .collect(Collectors.toList());
-        } else {
-            return ResponseEntity.ok(List.of());
+            return ResponseEntity.ok(members);
         }
-
-        return ResponseEntity.ok(members);
+        return ResponseEntity.ok(List.of());
     }
 
     /**
      * Get a specific member by ID.
-     * Can only view members of your own club.
      */
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
@@ -234,24 +182,28 @@ public class MemberController {
             return ResponseEntity.notFound().build();
         }
 
-        // Platform Admin can view any member
         if ("PLATFORM_ADMIN".equals(currentMember.getRole())) {
             return ResponseEntity.ok(MemberDto.fromEntity(targetMember));
         }
 
-        // Check if target member is in the same club
-        if (currentMember.getClub() != null && targetMember.getClub() != null &&
-                currentMember.getClub().getId().equals(targetMember.getClub().getId())) {
+        // Check if they share at least one club membership
+        List<Long> currentMemberClubs = clubMembershipRepository.findByMemberId(currentMember.getId()).stream()
+                .filter(m -> "APPROVED".equals(m.getStatus()))
+                .map(m -> m.getClub().getId())
+                .collect(Collectors.toList());
+        List<Long> targetMemberClubs = clubMembershipRepository.findByMemberId(targetMember.getId()).stream()
+                .filter(m -> "APPROVED".equals(m.getStatus()))
+                .map(m -> m.getClub().getId())
+                .collect(Collectors.toList());
+
+        if (currentMemberClubs.stream().anyMatch(targetMemberClubs::contains)) {
             return ResponseEntity.ok(MemberDto.fromEntity(targetMember));
         }
-
-        // Cannot view members from other clubs
         return ResponseEntity.status(403).body("Cannot view members from other clubs");
     }
 
     /**
      * Get members by club ID.
-     * Only Club Admin/Platform Admin can access.
      */
     @GetMapping("/club/{clubId}")
     @PreAuthorize("hasAnyRole('CLUB_ADMIN', 'PLATFORM_ADMIN')")
@@ -261,23 +213,21 @@ public class MemberController {
         Member currentMember = memberRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
 
-        // Club Admin can only see their own club's members
-        if ("CLUB_ADMIN".equals(currentMember.getRole())) {
-            if (currentMember.getClub() == null || !currentMember.getClub().getId().equals(clubId)) {
-                return ResponseEntity.status(403).body("Cannot view members from other clubs");
+        if (!"PLATFORM_ADMIN".equals(currentMember.getRole())) {
+            if (!clubAdminRepository.existsByMemberIdAndClubId(currentMember.getId(), clubId)) {
+                return ResponseEntity.status(403).body("Cannot view members from clubs you don't manage");
             }
         }
 
-        List<MemberDto> members = memberRepository.findByClubId(clubId).stream()
-                .map(MemberDto::fromEntity)
+        List<MemberDto> members = clubMembershipRepository.findByClubId(clubId).stream()
+                .filter(m -> "APPROVED".equals(m.getStatus()))
+                .map(m -> MemberDto.fromEntity(m.getMember()))
                 .collect(Collectors.toList());
-
         return ResponseEntity.ok(members);
     }
 
     /**
      * Get pending members waiting for approval.
-     * Only Club Admin/Platform Admin can access.
      */
     @GetMapping("/club/{clubId}/pending")
     @PreAuthorize("hasAnyRole('CLUB_ADMIN', 'PLATFORM_ADMIN')")
@@ -287,17 +237,21 @@ public class MemberController {
         Member currentMember = memberRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
 
-        // Club Admin can only see their own club's pending members
-        if ("CLUB_ADMIN".equals(currentMember.getRole())) {
-            if (currentMember.getClub() == null || !currentMember.getClub().getId().equals(clubId)) {
-                return ResponseEntity.status(403).body("Cannot view members from other clubs");
+        if (!"PLATFORM_ADMIN".equals(currentMember.getRole())) {
+            if (!clubAdminRepository.existsByMemberIdAndClubId(currentMember.getId(), clubId)) {
+                return ResponseEntity.status(403).body("Cannot view members from clubs you don't manage");
             }
         }
 
-        List<MemberDto> members = memberRepository.findByClubIdAndStatus(clubId, "PENDING").stream()
-                .map(MemberDto::fromEntity)
+        List<MemberDto> members = clubMembershipRepository.findByClubIdAndStatus(clubId, "PENDING").stream()
+                .map(m -> MemberDto.fromEntity(m.getMember()))
                 .collect(Collectors.toList());
-
         return ResponseEntity.ok(members);
+    }
+
+    private List<Long> getAdminClubIds(Long memberId) {
+        return clubAdminRepository.findByMemberId(memberId).stream()
+                .map(ca -> ca.getClub().getId())
+                .collect(Collectors.toList());
     }
 }

@@ -11,10 +11,6 @@ public class Member {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "club_id")
-    private Club club;
-
     @Column(nullable = false, unique = true, length = 100)
     private String email;
 
@@ -27,14 +23,10 @@ public class Member {
     @Column(length = 30)
     private String phone;
 
+    // role: PLATFORM_ADMIN or MEMBER only
+    // CLUB_ADMIN is determined by club_admin table, not this field
     @Column(nullable = false, length = 30)
     private String role = "MEMBER";
-
-    @Column(name = "club_position", length = 30)
-    private String clubPosition;
-
-    @Column(nullable = false, length = 20)
-    private String status = "PENDING";
 
     @Column(name = "notification_push")
     private Boolean notificationPush = true;
@@ -44,16 +36,6 @@ public class Member {
 
     @Column(name = "fcm_token", columnDefinition = "TEXT")
     private String fcmToken;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "approved_by")
-    private Member approvedBy;
-
-    @Column(name = "approved_at")
-    private LocalDateTime approvedAt;
-
-    @Column(name = "rejection_reason", columnDefinition = "TEXT")
-    private String rejectionReason;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -75,14 +57,6 @@ public class Member {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public Club getClub() {
-        return club;
-    }
-
-    public void setClub(Club club) {
-        this.club = club;
     }
 
     public String getEmail() {
@@ -125,22 +99,6 @@ public class Member {
         this.role = role;
     }
 
-    public String getClubPosition() {
-        return clubPosition;
-    }
-
-    public void setClubPosition(String clubPosition) {
-        this.clubPosition = clubPosition;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
     public Boolean getNotificationPush() {
         return notificationPush;
     }
@@ -163,30 +121,6 @@ public class Member {
 
     public void setFcmToken(String fcmToken) {
         this.fcmToken = fcmToken;
-    }
-
-    public Member getApprovedBy() {
-        return approvedBy;
-    }
-
-    public void setApprovedBy(Member approvedBy) {
-        this.approvedBy = approvedBy;
-    }
-
-    public LocalDateTime getApprovedAt() {
-        return approvedAt;
-    }
-
-    public void setApprovedAt(LocalDateTime approvedAt) {
-        this.approvedAt = approvedAt;
-    }
-
-    public String getRejectionReason() {
-        return rejectionReason;
-    }
-
-    public void setRejectionReason(String rejectionReason) {
-        this.rejectionReason = rejectionReason;
     }
 
     public LocalDateTime getCreatedAt() {

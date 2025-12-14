@@ -1,6 +1,6 @@
 # 3. 角色權限設計
 
-[← 返回目錄](./README.md) | [← 上一章](./02-user-registration.md)
+[← 返回目錄](../README.md) | [← 上一章](./02-user-registration.md)
 
 ---
 

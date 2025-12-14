@@ -1,6 +1,6 @@
 # 7. 會議投票機制 (Voting System)
 
-[← 返回目錄](./README.md) | [← 上一章](./06-agenda.md)
+[← 返回目錄](../README.md) | [← 上一章](./06-agenda.md)
 
 ---
 

@@ -1,6 +1,6 @@
 # 5. 會議角色註冊流程
 
-[← 返回目錄](./README.md) | [← 上一章](./04-meeting-management.md)
+[← 返回目錄](../README.md) | [← 上一章](./04-meeting-management.md)
 
 ---
 

@@ -8,6 +8,7 @@ import '../config/api_config.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/hand_drawn_widgets.dart';
+import 'club_members_list_screen.dart';
 
 class ClubPublicScreen extends StatefulWidget {
   final int clubId;
@@ -165,6 +166,37 @@ class _ClubPublicScreenState extends State<ClubPublicScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 24),
+
+                  // Extended Club Info
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      children: [
+                        _buildInfoRow(Icons.place, _clubDetails?['location']),
+                        const SizedBox(height: 12),
+                        _buildInfoRow(
+                          Icons.calendar_today,
+                          _getMeetingInfoString(),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildInfoRow(
+                          Icons.person,
+                          _clubDetails?['contactPerson'],
+                        ),
+                        const SizedBox(height: 12),
+                        _buildInfoRow(
+                          Icons.email,
+                          _clubDetails?['contactEmail'],
+                        ),
+                        const SizedBox(height: 12),
+                        _buildInfoRow(
+                          Icons.phone,
+                          _clubDetails?['contactPhone'],
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 32),
 
                   // Incoming Events Section
@@ -199,6 +231,66 @@ class _ClubPublicScreenState extends State<ClubPublicScreen> {
                     )
                   else
                     ..._meetings.map((meeting) => _buildMeetingCard(meeting)),
+
+                  const SizedBox(height: 32),
+
+                  // Members List Button
+                  HandDrawnContainer(
+                    color: Colors.white,
+                    borderColor: AppTheme.sageGreen,
+                    borderRadius: 16,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ClubMembersListScreen(
+                            clubId: widget.clubId,
+                            clubName: widget.clubName,
+                            readOnly: true,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppTheme.sageGreen.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.people, color: AppTheme.sageGreen),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Members List',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.darkWood,
+                                ),
+                              ),
+                              Text(
+                                'View all club members',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.lightWood,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          size: 16,
+                          color: AppTheme.lightWood,
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -291,6 +383,51 @@ class _ClubPublicScreenState extends State<ClubPublicScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  String _getMeetingInfoString() {
+    final day = _clubDetails?['meetingDay'] as String?;
+    final startRaw = _clubDetails?['meetingTime'] as String?;
+    final endRaw = _clubDetails?['meetingEndTime'] as String?;
+
+    if (day == null || day.isEmpty) return '';
+
+    String info = day;
+    final start = _formatTime(startRaw);
+    final end = _formatTime(endRaw);
+
+    if (start != null || end != null) {
+      info += ' at ';
+      if (start != null) info += start;
+      if (start != null && end != null) info += ' - ';
+      if (end != null) info += end;
+    }
+    return info;
+  }
+
+  String? _formatTime(String? timeRaw) {
+    if (timeRaw == null || timeRaw.isEmpty) return null;
+    final parts = timeRaw.split(':');
+    if (parts.length >= 2) {
+      return '${parts[0]}:${parts[1]}';
+    }
+    return timeRaw;
+  }
+
+  Widget _buildInfoRow(IconData icon, String? text) {
+    if (text == null || text.isEmpty) return const SizedBox.shrink();
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: AppTheme.sageGreen),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(fontSize: 16, color: AppTheme.darkWood),
+          ),
+        ),
+      ],
     );
   }
 }

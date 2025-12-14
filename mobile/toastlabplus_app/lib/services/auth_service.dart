@@ -260,4 +260,34 @@ class AuthService extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  /// Change password
+  Future<void> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
+    if (_token == null) {
+      throw Exception('Not logged in');
+    }
+
+    final response = await http
+        .post(
+          Uri.parse('${ApiConfig.mcpServerBaseUrl}/api/auth/change-password'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $_token',
+          },
+          body: json.encode({
+            'currentPassword': currentPassword,
+            'newPassword': newPassword,
+          }),
+        )
+        .timeout(ApiConfig.connectionTimeout);
+
+    final data = json.decode(response.body) as Map<String, dynamic>;
+
+    if (response.statusCode != 200) {
+      throw Exception(data['error'] ?? 'Failed to change password');
+    }
+  }
 }

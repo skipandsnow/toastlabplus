@@ -10,7 +10,12 @@ import java.util.List;
 @Repository
 public interface MeetingRepository extends JpaRepository<Meeting, Long> {
     List<Meeting> findByClubId(Long clubId);
+
     List<Meeting> findByClubIdAndStatus(Long clubId, String status);
+
     List<Meeting> findByClubIdAndMeetingDateAfter(Long clubId, LocalDate date);
+
     List<Meeting> findByClubIdOrderByMeetingDateDesc(Long clubId);
+
+    List<Meeting> findByClubIdIn(List<Long> clubIds);
 }

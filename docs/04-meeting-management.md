@@ -1,6 +1,6 @@
 # 4. 會議管理細部流程
 
-[← 返回目錄](./README.md) | [← 上一章](./03-permissions.md)
+[← 返回目錄](../README.md) | [← 上一章](./03-permissions.md)
 
 ---
 

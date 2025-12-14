@@ -33,6 +33,12 @@ public class Club {
     @Column(name = "contact_phone", length = 30)
     private String contactPhone;
 
+    @Column(name = "contact_person", length = 100)
+    private String contactPerson;
+
+    @Column(name = "meeting_end_time")
+    private LocalTime meetingEndTime;
+
     @Column(name = "is_active")
     private Boolean isActive = true;
 
@@ -109,6 +115,22 @@ public class Club {
 
     public void setContactPhone(String contactPhone) {
         this.contactPhone = contactPhone;
+    }
+
+    public String getContactPerson() {
+        return contactPerson;
+    }
+
+    public void setContactPerson(String contactPerson) {
+        this.contactPerson = contactPerson;
+    }
+
+    public LocalTime getMeetingEndTime() {
+        return meetingEndTime;
+    }
+
+    public void setMeetingEndTime(LocalTime meetingEndTime) {
+        this.meetingEndTime = meetingEndTime;
     }
 
     public Boolean getIsActive() {

@@ -1,5 +1,6 @@
 package com.toastlabplus.security;
 
+import com.toastlabplus.repository.ClubAdminRepository;
 import com.toastlabplus.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -16,15 +17,18 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private final ClubAdminRepository clubAdminRepository;
 
-    public JwtAuthenticationFilter(JwtService jwtService) {
+    public JwtAuthenticationFilter(JwtService jwtService, ClubAdminRepository clubAdminRepository) {
         this.jwtService = jwtService;
+        this.clubAdminRepository = clubAdminRepository;
     }
 
     @Override
@@ -49,10 +53,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         final String email = jwtService.extractEmail(jwt);
         final String role = jwtService.extractRole(jwt);
+        final Long memberId = jwtService.extractMemberId(jwt);
 
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            List<SimpleGrantedAuthority> authorities = List.of(
-                    new SimpleGrantedAuthority("ROLE_" + role));
+            List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+
+            // Base role from JWT (PLATFORM_ADMIN or MEMBER)
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+
+            // Real-time check: If member is admin of ANY club, add CLUB_ADMIN role
+            if (!"PLATFORM_ADMIN".equals(role) && memberId != null) {
+                if (clubAdminRepository.existsByMemberId(memberId)) {
+                    authorities.add(new SimpleGrantedAuthority("ROLE_CLUB_ADMIN"));
+                }
+            }
 
             UserDetails userDetails = new User(email, "", authorities);
 

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/auth_service.dart';
-import '../screens/club_membership_screen.dart';
 import '../screens/notifications_screen.dart';
 import '../theme/app_theme.dart';
 
@@ -115,48 +114,6 @@ class UserHeader extends StatelessWidget {
           ),
         ),
         if (!showBackButton) ...[
-          const SizedBox(width: 8),
-          InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ClubMembershipScreen()),
-              ).then((_) {
-                if (onMembershipChanged != null) {
-                  onMembershipChanged!();
-                }
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppTheme.lightWood.withValues(alpha: 0.2),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.change_circle_outlined,
-                    size: 18,
-                    color: AppTheme.darkWood.withValues(alpha: 0.7),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Join Club',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.darkWood.withValues(alpha: 0.7),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
           const SizedBox(width: 12),
           InkWell(
             onTap: () {

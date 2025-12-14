@@ -46,9 +46,17 @@ class ToastLabPlusApp extends StatelessWidget {
     }
 
     final member = authService.member;
-    final clubId = member?['clubId'];
+    final role = member?['role'] ?? 'MEMBER';
+    final adminClubIds = member?['adminClubIds'] as List<dynamic>? ?? [];
+    final memberClubIds = member?['memberClubIds'] as List<dynamic>? ?? [];
 
-    if (clubId == null) {
+    // Platform Admin or Club Admin don't need to join a club
+    if (role == 'PLATFORM_ADMIN' || adminClubIds.isNotEmpty) {
+      return const MainNavigationScreen();
+    }
+
+    // Regular members need to join a club
+    if (memberClubIds.isEmpty) {
       return const ClubSelectionWrapper();
     }
 

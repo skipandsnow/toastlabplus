@@ -1,6 +1,6 @@
 # 10. 技術棧與部署
 
-[← 返回目錄](./README.md) | [← 上一章](./09-database.md)
+[← 返回目錄](../README.md) | [← 上一章](./09-database.md)
 
 ---
 

@@ -1,6 +1,6 @@
 # 6. Agenda 模板管理與產生
 
-[← 返回目錄](./README.md) | [← 上一章](./05-role-registration.md)
+[← 返回目錄](../README.md) | [← 上一章](./05-role-registration.md)
 
 ---
 

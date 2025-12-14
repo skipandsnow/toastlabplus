@@ -83,6 +83,10 @@ public class AdminController {
                 return ResponseEntity.ok(members);
         }
 
+        /**
+         * Update member role. Only PLATFORM_ADMIN or MEMBER are valid.
+         * CLUB_ADMIN is now assigned via /api/members/{id}/assign-club-admin
+         */
         @PatchMapping("/members/{id}/role")
         public ResponseEntity<?> updateMemberRole(
                         @PathVariable Long id,
@@ -90,30 +94,23 @@ public class AdminController {
                 Member member = memberRepository.findById(id)
                                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
 
-                // Validate role
-                List<String> validRoles = List.of("MEMBER", "CLUB_ADMIN", "PLATFORM_ADMIN");
+                // Only PLATFORM_ADMIN and MEMBER are valid base roles
+                // CLUB_ADMIN is determined by club_admin table
+                List<String> validRoles = List.of("MEMBER", "PLATFORM_ADMIN");
                 if (!validRoles.contains(request.role())) {
                         return ResponseEntity.badRequest().body(Map.of(
-                                        "error", "Invalid role. Valid roles: " + validRoles));
+                                        "error", "Invalid role. Valid roles: " + validRoles,
+                                        "hint", "To assign Club Admin, use PUT /api/members/{id}/assign-club-admin"));
                 }
 
                 member.setRole(request.role());
                 member.setUpdatedAt(LocalDateTime.now());
-
-                // Set club if provided (for CLUB_ADMIN)
-                if (request.clubId() != null) {
-                        Club club = clubRepository.findById(request.clubId())
-                                        .orElseThrow(() -> new IllegalArgumentException("Club not found"));
-                        member.setClub(club);
-                }
-
                 memberRepository.save(member);
 
                 return ResponseEntity.ok(Map.of(
                                 "message", "Role updated successfully",
                                 "memberId", member.getId(),
-                                "newRole", member.getRole(),
-                                "clubId", member.getClub() != null ? member.getClub().getId() : null));
+                                "newRole", member.getRole()));
         }
 
         // ==================== Request DTOs ====================
@@ -124,7 +121,6 @@ public class AdminController {
         }
 
         public record UpdateRoleRequest(
-                        @NotBlank(message = "Role is required") String role,
-                        Long clubId) {
+                        @NotBlank(message = "Role is required") String role) {
         }
 }

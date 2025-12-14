@@ -3,6 +3,8 @@ package com.toastlabplus.controller;
 import com.toastlabplus.entity.Meeting;
 import com.toastlabplus.entity.Member;
 import com.toastlabplus.entity.RoleAssignment;
+import com.toastlabplus.repository.ClubAdminRepository;
+import com.toastlabplus.repository.ClubMembershipRepository;
 import com.toastlabplus.repository.MeetingRepository;
 import com.toastlabplus.repository.MemberRepository;
 import com.toastlabplus.repository.RoleAssignmentRepository;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/role-assignments")
@@ -26,48 +29,39 @@ public class RoleAssignmentController {
     private final RoleAssignmentRepository roleAssignmentRepository;
     private final MeetingRepository meetingRepository;
     private final MemberRepository memberRepository;
+    private final ClubAdminRepository clubAdminRepository;
+    private final ClubMembershipRepository clubMembershipRepository;
 
     public RoleAssignmentController(RoleAssignmentRepository roleAssignmentRepository,
             MeetingRepository meetingRepository,
-            MemberRepository memberRepository) {
+            MemberRepository memberRepository,
+            ClubAdminRepository clubAdminRepository,
+            ClubMembershipRepository clubMembershipRepository) {
         this.roleAssignmentRepository = roleAssignmentRepository;
         this.meetingRepository = meetingRepository;
         this.memberRepository = memberRepository;
+        this.clubAdminRepository = clubAdminRepository;
+        this.clubMembershipRepository = clubMembershipRepository;
     }
 
     /**
      * Get role assignments for a meeting.
-     * Can only view assignments for meetings in your club.
      */
     @GetMapping("/meeting/{meetingId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> getRolesByMeeting(
             @PathVariable Long meetingId,
             @AuthenticationPrincipal UserDetails userDetails) {
-        Member currentMember = memberRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
-
         Meeting meeting = meetingRepository.findById(meetingId).orElse(null);
         if (meeting == null) {
             return ResponseEntity.notFound().build();
         }
-
-        // Platform Admin can view any meeting's roles
-        if (!"PLATFORM_ADMIN".equals(currentMember.getRole())) {
-            // Check if meeting is in the same club
-            if (currentMember.getClub() == null || meeting.getClub() == null ||
-                    !currentMember.getClub().getId().equals(meeting.getClub().getId())) {
-                return ResponseEntity.status(403).body("Cannot view roles from other clubs");
-            }
-        }
-
         List<RoleAssignment> assignments = roleAssignmentRepository.findByMeetingId(meetingId);
         return ResponseEntity.ok(assignments);
     }
 
     /**
      * Get role assignments for a member.
-     * Can only view your own assignments or members in your club (if admin).
      */
     @GetMapping("/member/{memberId}")
     @PreAuthorize("isAuthenticated()")
@@ -86,10 +80,18 @@ public class RoleAssignmentController {
         if (!"PLATFORM_ADMIN".equals(currentMember.getRole())) {
             // Members can view their own roles
             if (!currentMember.getId().equals(memberId)) {
-                // Admin can view roles of members in their club
-                if (!"CLUB_ADMIN".equals(currentMember.getRole()) ||
-                        currentMember.getClub() == null || targetMember.getClub() == null ||
-                        !currentMember.getClub().getId().equals(targetMember.getClub().getId())) {
+                // Check if they share a club membership
+                List<Long> currentClubs = clubMembershipRepository.findByMemberId(currentMember.getId()).stream()
+                        .filter(m -> "APPROVED".equals(m.getStatus()))
+                        .map(m -> m.getClub().getId())
+                        .collect(Collectors.toList());
+                List<Long> targetClubs = clubMembershipRepository.findByMemberId(targetMember.getId()).stream()
+                        .filter(m -> "APPROVED".equals(m.getStatus()))
+                        .map(m -> m.getClub().getId())
+                        .collect(Collectors.toList());
+
+                boolean shareClub = currentClubs.stream().anyMatch(targetClubs::contains);
+                if (!shareClub) {
                     return ResponseEntity.status(403).body("Cannot view roles from other members");
                 }
             }
@@ -101,7 +103,7 @@ public class RoleAssignmentController {
 
     /**
      * Create a role assignment.
-     * Only Club Admin can assign roles for meetings in their club.
+     * Club Admin can only assign roles for meetings in clubs they manage.
      */
     @PostMapping
     @PreAuthorize("hasAnyRole('CLUB_ADMIN', 'PLATFORM_ADMIN')")
@@ -117,11 +119,11 @@ public class RoleAssignmentController {
         Member assignee = memberRepository.findById(request.memberId())
                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
 
-        // Club Admin can only assign roles for their club's meetings
-        if ("CLUB_ADMIN".equals(currentMember.getRole())) {
-            if (currentMember.getClub() == null || meeting.getClub() == null ||
-                    !currentMember.getClub().getId().equals(meeting.getClub().getId())) {
-                return ResponseEntity.status(403).body("Cannot assign roles for other clubs");
+        // Club Admin can only assign roles for their managed clubs
+        if (!"PLATFORM_ADMIN".equals(currentMember.getRole())) {
+            Long clubId = meeting.getClub().getId();
+            if (!clubAdminRepository.existsByMemberIdAndClubId(currentMember.getId(), clubId)) {
+                return ResponseEntity.status(403).body("Cannot assign roles for clubs you don't manage");
             }
         }
 

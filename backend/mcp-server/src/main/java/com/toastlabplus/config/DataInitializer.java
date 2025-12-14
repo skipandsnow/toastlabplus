@@ -54,7 +54,6 @@ public class DataInitializer implements CommandLineRunner {
         admin.setEmail(adminEmail);
         admin.setPasswordHash(passwordEncoder.encode(adminPassword)); // BCrypt hash 儲存到資料庫
         admin.setRole("PLATFORM_ADMIN");
-        admin.setStatus("ACTIVE");
         admin.setCreatedAt(LocalDateTime.now());
         admin.setUpdatedAt(LocalDateTime.now());
 

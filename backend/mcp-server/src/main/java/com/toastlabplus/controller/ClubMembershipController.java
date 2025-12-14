@@ -1,5 +1,6 @@
 package com.toastlabplus.controller;
 
+import com.toastlabplus.dto.MemberDto;
 import com.toastlabplus.entity.Club;
 import com.toastlabplus.entity.ClubMembership;
 import com.toastlabplus.entity.Member;
@@ -48,7 +49,6 @@ public class ClubMembershipController {
                 Club club = clubRepository.findById(request.clubId())
                                 .orElseThrow(() -> new IllegalArgumentException("Club not found"));
 
-                // Check if already applied
                 if (clubMembershipRepository.existsByMemberIdAndClubId(member.getId(), club.getId())) {
                         return ResponseEntity.badRequest().body(Map.of(
                                         "error", "You have already applied to this club"));
@@ -108,6 +108,25 @@ public class ClubMembershipController {
                 return ResponseEntity.ok(pending);
         }
 
+        @GetMapping("/club/{clubId}")
+        public ResponseEntity<?> getClubMemberships(
+                        @PathVariable Long clubId,
+                        @AuthenticationPrincipal UserDetails userDetails) {
+                // Return all memberships for the club (frontend filters by status, but we could
+                // filter here too)
+                // Use MemberDto to avoid exposing sensitive info like password hash
+                List<Map<String, Object>> memberships = clubMembershipRepository.findByClubId(clubId)
+                                .stream()
+                                .map(m -> Map.<String, Object>of(
+                                                "id", m.getId(),
+                                                "status", m.getStatus(),
+                                                "joinedAt", m.getCreatedAt().toString(),
+                                                "member", MemberDto.fromEntity(m.getMember())))
+                                .collect(Collectors.toList());
+
+                return ResponseEntity.ok(memberships);
+        }
+
         @PatchMapping("/{id}/approve")
         @PreAuthorize("hasAnyRole('CLUB_ADMIN', 'PLATFORM_ADMIN')")
         public ResponseEntity<?> approveMembership(
@@ -119,25 +138,17 @@ public class ClubMembershipController {
                 Member approver = memberRepository.findByEmail(userDetails.getUsername())
                                 .orElseThrow(() -> new IllegalArgumentException("Approver not found"));
 
+                // Only update the club_membership record (not member table)
                 membership.setStatus("APPROVED");
                 membership.setApprovedBy(approver);
                 membership.setApprovedAt(LocalDateTime.now());
                 membership.setUpdatedAt(LocalDateTime.now());
-
-                // Also update the member's club association
-                Member member = membership.getMember();
-                member.setClub(membership.getClub());
-                member.setStatus("APPROVED");
-                member.setApprovedBy(approver);
-                member.setApprovedAt(LocalDateTime.now());
-                memberRepository.save(member);
-
                 clubMembershipRepository.save(membership);
 
                 return ResponseEntity.ok(Map.of(
                                 "message", "Membership approved",
                                 "membershipId", membership.getId(),
-                                "memberName", member.getName()));
+                                "memberName", membership.getMember().getName()));
         }
 
         @PatchMapping("/{id}/reject")
@@ -178,18 +189,37 @@ public class ClubMembershipController {
                                         "error", "You can only leave your own membership"));
                 }
 
-                // If this was the member's active club, clear it
-                if (member.getClub() != null && member.getClub().getId().equals(membership.getClub().getId())) {
-                        member.setClub(null);
-                        member.setStatus("REGISTERED");
-                        memberRepository.save(member);
-                }
-
                 clubMembershipRepository.delete(membership);
 
                 return ResponseEntity.ok(Map.of(
                                 "message", "Successfully left the club",
                                 "clubName", membership.getClub().getName()));
+        }
+
+        // ==================== 取消申請 (by clubId) ====================
+
+        @DeleteMapping("/club/{clubId}")
+        public ResponseEntity<?> cancelApplication(
+                        @PathVariable Long clubId,
+                        @AuthenticationPrincipal UserDetails userDetails) {
+                Member member = memberRepository.findByEmail(userDetails.getUsername())
+                                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+
+                ClubMembership membership = clubMembershipRepository.findByMemberIdAndClubId(member.getId(), clubId)
+                                .orElseThrow(() -> new IllegalArgumentException("Application not found"));
+
+                // Only allow canceling PENDING applications
+                if (!"PENDING".equals(membership.getStatus())) {
+                        return ResponseEntity.badRequest().body(Map.of(
+                                        "error", "Can only cancel pending applications"));
+                }
+
+                String clubName = membership.getClub().getName();
+                clubMembershipRepository.delete(membership);
+
+                return ResponseEntity.ok(Map.of(
+                                "message", "Application cancelled",
+                                "clubName", clubName));
         }
 
         // ==================== Request DTOs ====================

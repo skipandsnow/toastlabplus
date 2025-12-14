@@ -140,11 +140,23 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 32),
 
               // Menu Options
-              _buildMenuOption(Icons.history_rounded, 'History'),
+              _buildMenuOption(Icons.history_rounded, 'History', () {}),
               const SizedBox(height: 16),
-              _buildMenuOption(Icons.settings_rounded, 'Settings'),
+              _buildMenuOption(
+                Icons.lock_outline_rounded,
+                'Change Password',
+                () {
+                  _showChangePasswordDialog(context, authService);
+                },
+              ),
               const SizedBox(height: 16),
-              _buildMenuOption(Icons.help_outline_rounded, 'Help & Support'),
+              _buildMenuOption(Icons.settings_rounded, 'Settings', () {}),
+              const SizedBox(height: 16),
+              _buildMenuOption(
+                Icons.help_outline_rounded,
+                'Help & Support',
+                () {},
+              ),
               const SizedBox(height: 32),
 
               // Logout Button
@@ -206,6 +218,150 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  void _showChangePasswordDialog(
+    BuildContext context,
+    AuthService authService,
+  ) {
+    final currentPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool isLoading = false;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.lock_outline, color: AppTheme.sageGreen),
+              const SizedBox(width: 8),
+              const Text('Change Password'),
+            ],
+          ),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: currentPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Current Password',
+                    prefixIcon: Icon(Icons.lock),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter current password';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: newPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'New Password',
+                    prefixIcon: Icon(Icons.lock_outline),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter new password';
+                    }
+                    if (value.length < 6) {
+                      return 'Password must be at least 6 characters';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: confirmPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Confirm New Password',
+                    prefixIcon: Icon(Icons.lock_outline),
+                  ),
+                  validator: (value) {
+                    if (value != newPasswordController.text) {
+                      return 'Passwords do not match';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isLoading ? null : () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.sageGreen,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: isLoading
+                  ? null
+                  : () async {
+                      if (!formKey.currentState!.validate()) return;
+
+                      setState(() => isLoading = true);
+
+                      try {
+                        await authService.changePassword(
+                          currentPasswordController.text,
+                          newPasswordController.text,
+                        );
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text(
+                                'Password changed successfully',
+                              ),
+                              backgroundColor: AppTheme.sageGreen,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                e.toString().replaceAll('Exception: ', ''),
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      } finally {
+                        setState(() => isLoading = false);
+                      }
+                    },
+              child: isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text('Change'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildStatCard(String label, String value, Color color) {
     return Expanded(
       child: HandDrawnContainer(
@@ -234,13 +390,13 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuOption(IconData icon, String title) {
+  Widget _buildMenuOption(IconData icon, String title, VoidCallback onTap) {
     return HandDrawnContainer(
       color: Colors.white,
       borderColor: AppTheme.lightWood.withValues(alpha: 0.2),
       borderRadius: 16,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      onTap: () {},
+      onTap: onTap,
       child: Row(
         children: [
           Container(

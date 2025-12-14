@@ -21,6 +21,7 @@ class _ClubManagementScreenState extends State<ClubManagementScreen> {
   List<dynamic> _clubs = [];
   bool _isLoading = true;
   String? _error;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -102,6 +103,47 @@ class _ClubManagementScreenState extends State<ClubManagementScreen> {
             ),
             const SizedBox(height: 16),
 
+            // Search box
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Search clubs...',
+                  prefixIcon: Icon(Icons.search, color: AppTheme.lightWood),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(Icons.clear, color: AppTheme.lightWood),
+                          onPressed: () => setState(() => _searchQuery = ''),
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: AppTheme.lightWood.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: AppTheme.lightWood.withValues(alpha: 0.3),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: AppTheme.dustyBlue),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+                onChanged: (value) => setState(() => _searchQuery = value),
+              ),
+            ),
+            const SizedBox(height: 16),
+
             Expanded(child: _buildBody()),
           ],
         ),
@@ -147,11 +189,36 @@ class _ClubManagementScreenState extends State<ClubManagementScreen> {
       );
     }
 
+    // Filter clubs by search query
+    final filteredClubs = _clubs.where((club) {
+      if (_searchQuery.isEmpty) return true;
+      final name = (club['name'] ?? '').toString().toLowerCase();
+      final description = (club['description'] ?? '').toString().toLowerCase();
+      final query = _searchQuery.toLowerCase();
+      return name.contains(query) || description.contains(query);
+    }).toList();
+
+    if (filteredClubs.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 64, color: AppTheme.lightWood),
+            const SizedBox(height: 16),
+            Text(
+              'No clubs found.',
+              style: TextStyle(color: AppTheme.lightWood, fontSize: 16),
+            ),
+          ],
+        ),
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      itemCount: _clubs.length,
+      itemCount: filteredClubs.length,
       itemBuilder: (context, index) {
-        final club = _clubs[index];
+        final club = filteredClubs[index];
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: HandDrawnContainer(

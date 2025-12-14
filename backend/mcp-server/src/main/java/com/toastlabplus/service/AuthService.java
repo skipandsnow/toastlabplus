@@ -36,7 +36,6 @@ public class AuthService {
         member.setEmail(email);
         member.setPasswordHash(passwordEncoder.encode(password));
         member.setRole("MEMBER"); // Default role for platform member
-        member.setStatus("ACTIVE"); // Platform member is active immediately
         member.setCreatedAt(LocalDateTime.now());
         member.setUpdatedAt(LocalDateTime.now());
 
@@ -67,5 +66,21 @@ public class AuthService {
     public Member getMemberById(Long id) {
         return memberRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+    }
+
+    @Transactional
+    public void changePassword(String email, String currentPassword, String newPassword) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+
+        // Verify current password
+        if (!passwordEncoder.matches(currentPassword, member.getPasswordHash())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+
+        // Update to new password
+        member.setPasswordHash(passwordEncoder.encode(newPassword));
+        member.setUpdatedAt(LocalDateTime.now());
+        memberRepository.save(member);
     }
 }
