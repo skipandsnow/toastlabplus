@@ -28,6 +28,7 @@ class ClubMembersListScreen extends StatefulWidget {
 class _ClubMembersListScreenState extends State<ClubMembersListScreen> {
   List<dynamic> _members = [];
   List<int> _clubAdminIds = [];
+  Map<int, String> _memberOfficerPositions = {}; // memberId -> position display
   bool _isLoading = true;
   String? _error;
 
@@ -62,6 +63,14 @@ class _ClubMembersListScreenState extends State<ClubMembersListScreen> {
         headers: authService.authHeaders,
       );
 
+      // Load officers
+      final officersResponse = await http.get(
+        Uri.parse(
+          '${ApiConfig.mcpServerBaseUrl}/api/clubs/${widget.clubId}/officers',
+        ),
+        headers: authService.authHeaders,
+      );
+
       if (membersResponse.statusCode == 200) {
         final memberships = json.decode(membersResponse.body) as List<dynamic>;
         // Filter only APPROVED memberships and extract member data
@@ -76,10 +85,23 @@ class _ClubMembersListScreenState extends State<ClubMembersListScreen> {
           adminIds = admins.map((a) => a['memberId'] as int).toList();
         }
 
+        // Build officer positions map
+        Map<int, String> officerPositions = {};
+        if (officersResponse.statusCode == 200) {
+          final officers = json.decode(officersResponse.body) as List<dynamic>;
+          for (final officer in officers) {
+            if (officer['isFilled'] == true && officer['memberId'] != null) {
+              officerPositions[officer['memberId'] as int] =
+                  officer['positionDisplay'] as String;
+            }
+          }
+        }
+
         if (mounted) {
           setState(() {
             _members = approvedMembers;
             _clubAdminIds = adminIds;
+            _memberOfficerPositions = officerPositions;
             _isLoading = false;
           });
         }
@@ -245,6 +267,8 @@ class _ClubMembersListScreenState extends State<ClubMembersListScreen> {
                           final email = member['email'] ?? '';
                           final platformRole = member['role'] ?? 'MEMBER';
                           final isClubAdmin = _clubAdminIds.contains(memberId);
+                          final officerPosition =
+                              _memberOfficerPositions[memberId];
                           final initial = name.isNotEmpty
                               ? name[0].toUpperCase()
                               : '?';
@@ -378,6 +402,46 @@ class _ClubMembersListScreenState extends State<ClubMembersListScreen> {
                                                       fontWeight:
                                                           FontWeight.bold,
                                                       color: AppTheme.dustyBlue,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          // Officer position badge if applicable
+                                          if (officerPosition != null)
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 2,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.purple.withValues(
+                                                  alpha: 0.15,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                                border: Border.all(
+                                                  color: Colors.purple
+                                                      .withValues(alpha: 0.4),
+                                                ),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(
+                                                    Icons.badge,
+                                                    size: 10,
+                                                    color: Colors.purple,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    officerPosition,
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Colors.purple,
                                                     ),
                                                   ),
                                                 ],

@@ -74,15 +74,60 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // Logo / Title
-                    Icon(Icons.eco, size: 64, color: AppTheme.sageGreen),
-                    const SizedBox(height: 16),
-                    Text(
-                      'ToastLabPlus',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.darkWood,
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        width: 80,
+                        height: 80,
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'ToastLab',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.darkWood,
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Icon(
+                                Icons.star_rounded,
+                                size: 22,
+                                color: Colors.amber,
+                              ),
+                              Positioned(
+                                top: -6,
+                                right: -8,
+                                child: Icon(
+                                  Icons.star_rounded,
+                                  size: 10,
+                                  color: Colors.amber.shade300,
+                                ),
+                              ),
+                              Positioned(
+                                bottom: -4,
+                                right: -10,
+                                child: Icon(
+                                  Icons.star_rounded,
+                                  size: 8,
+                                  color: Colors.amber.shade200,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     Text(

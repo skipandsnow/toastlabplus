@@ -1,5 +1,6 @@
 package com.toastlabplus.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -15,6 +16,7 @@ public class Meeting {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "club_id", nullable = false)
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     private Club club;
 
     @Column(length = 200)
@@ -38,8 +40,23 @@ public class Meeting {
     @Column(nullable = false, length = 20)
     private String status = "DRAFT";
 
+    @Column(name = "meeting_number")
+    private Integer meetingNumber;
+
+    @Column(name = "speaker_count")
+    private Integer speakerCount = 3;
+
+    @Column(name = "template_id")
+    private Long templateId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "schedule_id")
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+    private MeetingSchedule schedule;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     private Member createdBy;
 
     @Column(name = "created_at")
@@ -47,6 +64,14 @@ public class Meeting {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt = LocalDateTime.now();
+
+    // Status constants
+    public static final String STATUS_DRAFT = "DRAFT";
+    public static final String STATUS_OPEN = "OPEN";
+    public static final String STATUS_CLOSED = "CLOSED";
+    public static final String STATUS_FINALIZED = "FINALIZED";
+    public static final String STATUS_COMPLETED = "COMPLETED";
+    public static final String STATUS_CANCELLED = "CANCELLED";
 
     // Constructors
     public Meeting() {
@@ -147,5 +172,37 @@ public class Meeting {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Integer getMeetingNumber() {
+        return meetingNumber;
+    }
+
+    public void setMeetingNumber(Integer meetingNumber) {
+        this.meetingNumber = meetingNumber;
+    }
+
+    public Integer getSpeakerCount() {
+        return speakerCount;
+    }
+
+    public void setSpeakerCount(Integer speakerCount) {
+        this.speakerCount = speakerCount;
+    }
+
+    public Long getTemplateId() {
+        return templateId;
+    }
+
+    public void setTemplateId(Long templateId) {
+        this.templateId = templateId;
+    }
+
+    public MeetingSchedule getSchedule() {
+        return schedule;
+    }
+
+    public void setSchedule(MeetingSchedule schedule) {
+        this.schedule = schedule;
     }
 }

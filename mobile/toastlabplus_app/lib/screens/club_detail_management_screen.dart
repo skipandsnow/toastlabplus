@@ -13,6 +13,9 @@ import 'admin_approval_screen.dart';
 import 'member_selection_screen.dart';
 import 'edit_club_info_screen.dart';
 import 'club_members_list_screen.dart';
+import 'officer_management_screen.dart';
+import 'meeting_settings_screen.dart';
+import 'template_management_screen.dart';
 
 class ClubDetailManagementScreen extends StatelessWidget {
   final int clubId;
@@ -297,18 +300,38 @@ class ClubDetailManagementScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   _buildManagementOption(
                     context,
-                    'Make Agenda',
-                    Icons.edit_calendar,
-                    Colors.orange.shade400,
+                    'Officers',
+                    Icons.badge,
+                    Colors.purple.shade400,
                     () {
-                      // TODO: Implement Make Agenda
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Make Agenda is coming soon!'),
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => OfficerManagementScreen(
+                            clubId: clubId,
+                            clubName: clubName,
+                          ),
                         ),
                       );
                     },
-                    description: 'Create new meeting program',
+                    description: 'Manage club officer positions',
+                  ),
+                  const SizedBox(height: 16),
+                  _buildManagementOption(
+                    context,
+                    'Agenda Templates',
+                    Icons.description,
+                    Colors.orange.shade400,
+                    () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => TemplateManagementScreen(
+                            clubId: clubId,
+                            clubName: clubName,
+                          ),
+                        ),
+                      );
+                    },
+                    description: 'Manage agenda templates',
                   ),
                   const SizedBox(height: 16),
                   _buildManagementOption(
@@ -317,10 +340,12 @@ class ClubDetailManagementScreen extends StatelessWidget {
                     Icons.settings_suggest,
                     AppTheme.softPeach,
                     () {
-                      // TODO: Implement Meeting Settings
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Meeting Settings is coming soon!'),
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => MeetingSettingsScreen(
+                            clubId: clubId,
+                            clubName: clubName,
+                          ),
                         ),
                       );
                     },

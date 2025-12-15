@@ -20,8 +20,13 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
   final _nameController = TextEditingController();
   final _descController = TextEditingController();
   final _locationController = TextEditingController();
-  final _meetingDayController = TextEditingController(); // Or dropdown
+  final _meetingDayController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _contactPersonController = TextEditingController();
+
   TimeOfDay? _meetingTime;
+  TimeOfDay? _meetingEndTime;
 
   bool _isLoading = false;
   String? _error;
@@ -42,19 +47,29 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
         'description': _descController.text.trim(),
         'location': _locationController.text.trim(),
         'meetingDay': _meetingDayController.text.trim(),
+        'contactEmail': _emailController.text.trim(),
+        'contactPhone': _phoneController.text.trim(),
+        'contactPerson': _contactPersonController.text.trim(),
         'isActive': true,
       };
 
       if (_meetingTime != null) {
-        // Format as HH:mm:ss for LocalTime
         final hour = _meetingTime!.hour.toString().padLeft(2, '0');
         final minute = _meetingTime!.minute.toString().padLeft(2, '0');
         clubData['meetingTime'] = '$hour:$minute:00';
       }
+      if (_meetingEndTime != null) {
+        final hour = _meetingEndTime!.hour.toString().padLeft(2, '0');
+        final minute = _meetingEndTime!.minute.toString().padLeft(2, '0');
+        clubData['meetingEndTime'] = '$hour:$minute:00';
+      }
 
       final response = await http.post(
         Uri.parse('${ApiConfig.mcpServerBaseUrl}${ApiConfig.clubsEndpoint}'),
-        headers: authService.authHeaders,
+        headers: {
+          ...authService.authHeaders,
+          'Content-Type': 'application/json',
+        },
         body: json.encode(clubData),
       );
 
@@ -63,10 +78,7 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Club created successfully!')),
           );
-          Navigator.pop(
-            context,
-            true,
-          ); // Return result to refresh list if needed
+          Navigator.pop(context, true);
         }
       } else {
         throw Exception('Failed to create club: ${response.statusCode}');
@@ -88,6 +100,9 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
     _descController.dispose();
     _locationController.dispose();
     _meetingDayController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _contactPersonController.dispose();
     super.dispose();
   }
 
@@ -99,6 +114,18 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
     if (picked != null && picked != _meetingTime) {
       setState(() {
         _meetingTime = picked;
+      });
+    }
+  }
+
+  Future<void> _selectEndTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: _meetingEndTime ?? TimeOfDay.now(),
+    );
+    if (picked != null && picked != _meetingEndTime) {
+      setState(() {
+        _meetingEndTime = picked;
       });
     }
   }
@@ -151,36 +178,104 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
                   controller: _locationController,
                 ),
                 const SizedBox(height: 16),
+                _buildTextField(
+                  label: 'Meeting Day',
+                  controller: _meetingDayController,
+                ),
+                const SizedBox(height: 16),
                 Row(
                   children: [
                     Expanded(
-                      child: _buildTextField(
-                        label: 'Meeting Day (e.g. Monday)',
-                        controller: _meetingDayController,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Start Time',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.darkWood,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          HandDrawnContainer(
+                            color: Colors.white,
+                            borderColor: AppTheme.lightWood,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            onTap: () => _selectTime(context),
+                            child: Center(
+                              child: Text(
+                                _meetingTime?.format(context) ?? 'Set',
+                                style: TextStyle(
+                                  color: _meetingTime == null
+                                      ? AppTheme.lightWood
+                                      : AppTheme.darkWood,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
-                      child: HandDrawnContainer(
-                        color: Colors.white,
-                        borderColor: AppTheme.lightWood,
-                        onTap: () => _selectTime(context),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Text(
-                            _meetingTime?.format(context) ?? 'Set Time',
-                            textAlign: TextAlign.center,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'End Time',
                             style: TextStyle(
-                              color: _meetingTime == null
-                                  ? AppTheme.lightWood
-                                  : AppTheme.darkWood,
                               fontWeight: FontWeight.bold,
+                              color: AppTheme.darkWood,
                             ),
                           ),
-                        ),
+                          const SizedBox(height: 8),
+                          HandDrawnContainer(
+                            color: Colors.white,
+                            borderColor: AppTheme.lightWood,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            onTap: () => _selectEndTime(context),
+                            child: Center(
+                              child: Text(
+                                _meetingEndTime?.format(context) ?? 'Set',
+                                style: TextStyle(
+                                  color: _meetingEndTime == null
+                                      ? AppTheme.lightWood
+                                      : AppTheme.darkWood,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 16),
+                _buildTextField(
+                  label: 'Contact Person',
+                  controller: _contactPersonController,
+                ),
+                const SizedBox(height: 16),
+                _buildTextField(
+                  label: 'Contact Email',
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 16),
+                _buildTextField(
+                  label: 'Contact Phone',
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
                 ),
 
                 const SizedBox(height: 32),
@@ -207,6 +302,7 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
     required TextEditingController controller,
     int maxLines = 1,
     String? Function(String?)? validator,
+    TextInputType? keyboardType,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -226,6 +322,7 @@ class _CreateClubScreenState extends State<CreateClubScreen> {
           child: TextFormField(
             controller: controller,
             maxLines: maxLines,
+            keyboardType: keyboardType,
             decoration: const InputDecoration(border: InputBorder.none),
             validator: validator,
           ),

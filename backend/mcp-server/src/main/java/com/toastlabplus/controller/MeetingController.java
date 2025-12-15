@@ -147,6 +147,38 @@ public class MeetingController {
                 "title", saved.getTitle()));
     }
 
+    /**
+     * Delete a meeting.
+     * Only Club Admin of the meeting's club or Platform Admin can delete.
+     */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('CLUB_ADMIN', 'PLATFORM_ADMIN')")
+    public ResponseEntity<?> deleteMeeting(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Member currentMember = memberRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+
+        Meeting meeting = meetingRepository.findById(id).orElse(null);
+        if (meeting == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Check permission
+        Long clubId = meeting.getClub().getId();
+        if (!"PLATFORM_ADMIN".equals(currentMember.getRole())) {
+            if (!clubAdminRepository.existsByMemberIdAndClubId(currentMember.getId(), clubId)) {
+                return ResponseEntity.status(403)
+                        .body(Map.of("error", "You can only delete meetings for clubs you manage"));
+            }
+        }
+
+        // Delete the meeting (cascade will delete role slots)
+        meetingRepository.delete(meeting);
+
+        return ResponseEntity.ok(Map.of("message", "Meeting deleted successfully"));
+    }
+
     // ==================== Request DTOs ====================
 
     public record CreateMeetingRequest(

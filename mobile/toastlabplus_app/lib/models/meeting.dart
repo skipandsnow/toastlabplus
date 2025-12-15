@@ -1,26 +1,30 @@
 /// Meeting model for ToastLabPlus
 class Meeting {
-  final int? id;
+  final int id;
   final int? clubId;
+  final int? meetingNumber;
   final String? theme;
-  final DateTime? meetingDate;
+  final DateTime meetingDate;
   final String? startTime;
   final String? endTime;
   final String? location;
-  final String? status;
+  final String status;
+  final int? speakerCount;
   final String? notes;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
   Meeting({
-    this.id,
+    required this.id,
     this.clubId,
+    this.meetingNumber,
     this.theme,
-    this.meetingDate,
+    required this.meetingDate,
     this.startTime,
     this.endTime,
     this.location,
-    this.status,
+    required this.status,
+    this.speakerCount,
     this.notes,
     this.createdAt,
     this.updatedAt,
@@ -28,16 +32,18 @@ class Meeting {
 
   factory Meeting.fromJson(Map<String, dynamic> json) {
     return Meeting(
-      id: json['id'] as int?,
+      id: json['id'] as int,
       clubId: json['clubId'] as int?,
+      meetingNumber: json['meetingNumber'] as int?,
       theme: json['theme'] as String?,
       meetingDate: json['meetingDate'] != null
-          ? DateTime.tryParse(json['meetingDate'] as String)
-          : null,
+          ? DateTime.parse(json['meetingDate'] as String)
+          : DateTime.now(),
       startTime: json['startTime'] as String?,
       endTime: json['endTime'] as String?,
       location: json['location'] as String?,
-      status: json['status'] as String?,
+      status: json['status'] as String? ?? 'DRAFT',
+      speakerCount: json['speakerCount'] as int?,
       notes: json['notes'] as String?,
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'] as String)
@@ -50,15 +56,16 @@ class Meeting {
 
   Map<String, dynamic> toJson() {
     return {
-      if (id != null) 'id': id,
+      'id': id,
       if (clubId != null) 'clubId': clubId,
+      if (meetingNumber != null) 'meetingNumber': meetingNumber,
       if (theme != null) 'theme': theme,
-      if (meetingDate != null)
-        'meetingDate': meetingDate!.toIso8601String().split('T')[0],
+      'meetingDate': meetingDate.toIso8601String().split('T')[0],
       if (startTime != null) 'startTime': startTime,
       if (endTime != null) 'endTime': endTime,
       if (location != null) 'location': location,
-      if (status != null) 'status': status,
+      'status': status,
+      if (speakerCount != null) 'speakerCount': speakerCount,
       if (notes != null) 'notes': notes,
     };
   }
@@ -67,16 +74,18 @@ class Meeting {
     switch (status) {
       case 'DRAFT':
         return 'Draft';
-      case 'PUBLISHED':
-        return 'Open';
-      case 'IN_PROGRESS':
-        return 'In Progress';
+      case 'OPEN':
+        return 'Open for Sign-up';
+      case 'CLOSED':
+        return 'Closed';
+      case 'FINALIZED':
+        return 'Finalized';
       case 'COMPLETED':
         return 'Completed';
       case 'CANCELLED':
         return 'Cancelled';
       default:
-        return status ?? 'Unknown';
+        return status;
     }
   }
 }
