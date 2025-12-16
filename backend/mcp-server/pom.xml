@@ -122,6 +122,12 @@
             <artifactId>jdbc-socket-factory-core</artifactId>
             <version>1.21.0</version>
         </dependency>
+        <!-- Override google-auth-library version for Cloud SQL connector compatibility -->
+        <dependency>
+            <groupId>com.google.auth</groupId>
+            <artifactId>google-auth-library-oauth2-http</artifactId>
+            <version>1.23.0</version>
+        </dependency>
     </dependencies>
 
     <dependencyManagement>
