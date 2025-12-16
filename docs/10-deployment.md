@@ -231,10 +231,14 @@ flowchart LR
 
 | 階段 | 項目 | 狀態 |
 |:---|:---|:---:|
-| **GCP 基礎** | 建立 GCP Project | ⬜ |
+| **GCP 基礎** | 建立 GCP Project | ✅ |
 | | 啟用必要 API | ⬜ |
 | | 設定 VPC Network | ⬜ |
 | | 建立 Artifact Registry | ⬜ |
+| **Workload Identity** | 建立 Workload Identity Pool | ⬜ |
+| | 建立 OIDC Provider | ⬜ |
+| | 建立 Service Account | ⬜ |
+| | 綁定 GitHub Repo | ⬜ |
 | **資料庫** | 建立 Cloud SQL Instance | ⬜ |
 | | 建立 Database | ⬜ |
 | | 設定私有 IP 連線 | ⬜ |
@@ -246,8 +250,57 @@ flowchart LR
 | | 設定環境變數 | ⬜ |
 | | 設定 VPC Connector | ⬜ |
 | **CI/CD** | 設定 GitHub Actions | ⬜ |
-| | 設定 Workload Identity | ⬜ |
 | | 測試自動部署 | ⬜ |
+
+## 10.8 快速開始指令
+
+### Step 1: GCP 基礎資源
+
+```bash
+# 執行 GCP 基礎設定腳本
+cd infrastructure/scripts
+chmod +x setup-gcp.sh
+./setup-gcp.sh
+```
+
+### Step 2: Workload Identity Federation
+
+```bash
+# ⚠️ 先編輯腳本，修改 GITHUB_ORG 和 GITHUB_REPO 變數
+chmod +x setup-workload-identity.sh
+./setup-workload-identity.sh
+```
+
+### Step 3: Secret Manager 設定
+
+```bash
+# 建立 DB 密碼 Secret
+echo -n "YOUR_DB_PASSWORD" | gcloud secrets create DB_PASSWORD --data-file=-
+
+# 建立 Gemini API Key Secret (從 Google AI Studio 取得)
+echo -n "YOUR_GEMINI_API_KEY" | gcloud secrets create GEMINI_API_KEY --data-file=-
+```
+
+### Step 4: 本機 Docker 測試
+
+```bash
+# 測試 MCP Server Docker build
+cd backend/mcp-server
+docker build -t mcp-server:test .
+
+# 測試 Chat Backend Docker build
+cd backend/chat-backend
+docker build -t chat-backend:test .
+```
+
+### Step 5: 觸發 CI/CD
+
+```bash
+# Push 到 main branch 觸發自動部署
+git add .
+git commit -m "feat: add deployment configuration"
+git push origin main
+```
 
 ---
 
