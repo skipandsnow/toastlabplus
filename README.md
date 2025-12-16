@@ -95,10 +95,15 @@ flowchart TB
 ```
 toastlabplus/
 ├── backend/
+│   ├── mcp-server/       # Spring Boot MCP Server (REST API)
+│   └── chat-backend/     # Python Chat Backend (FastAPI + Gemini)
 ├── mobile/
+│   └── toastlabplus_app/ # Flutter App (iOS/Android/Web)
 ├── infrastructure/
-├── scripts/              # 運維腳本
-└── docs/                 # 實作計畫文件
+│   ├── terraform/        # GCP Infrastructure as Code
+│   └── scripts/          # GCP 設定腳本
+├── scripts/              # 運維腳本 (gcp-ops.sh)
+└── docs/                 # 實作計畫文件 (12 章節)
 ```
 
 ---
