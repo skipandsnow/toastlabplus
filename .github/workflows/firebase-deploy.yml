@@ -1,96 +1,95 @@
 name: Deploy Flutter Web to Firebase
 
 on:
-    push:
-        branches: [main, develop]
-        paths:
-            - "mobile/toastlabplus_app/**"
-    workflow_dispatch: # 手動觸發
+  push:
+    branches: [main, develop]
+    paths:
+      - "mobile/toastlabplus_app/**"
+  workflow_dispatch: # 手動觸發
 
 env:
-    # Cloud Run URLs
-    MCP_SERVER_STAGING: https://mcp-server-staging-96030530148.asia-east1.run.app
-    MCP_SERVER_PRODUCTION: https://mcp-server-96030530148.asia-east1.run.app
-    CHAT_BACKEND_STAGING: https://chat-backend-staging-96030530148.asia-east1.run.app
-    CHAT_BACKEND_PRODUCTION: https://chat-backend-96030530148.asia-east1.run.app
-    # Workload Identity
-    WORKLOAD_IDENTITY_PROVIDER: projects/96030530148/locations/global/workloadIdentityPools/github-pool/providers/github-provider
-    SERVICE_ACCOUNT: github-actions@toastlabplus.iam.gserviceaccount.com
+  # Cloud Run URLs
+  MCP_SERVER_STAGING: https://mcp-server-staging-96030530148.asia-east1.run.app
+  MCP_SERVER_PRODUCTION: https://mcp-server-96030530148.asia-east1.run.app
+  CHAT_BACKEND_STAGING: https://chat-backend-staging-96030530148.asia-east1.run.app
+  CHAT_BACKEND_PRODUCTION: https://chat-backend-96030530148.asia-east1.run.app
+  # Workload Identity
+  WORKLOAD_IDENTITY_PROVIDER: projects/96030530148/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+  SERVICE_ACCOUNT: github-actions@toastlabplus.iam.gserviceaccount.com
 
 jobs:
-    build-and-deploy:
-        name: Build and Deploy Flutter Web
-        runs-on: ubuntu-latest
-        permissions:
-            contents: read
-            id-token: write
+  build-and-deploy:
+    name: Build and Deploy Flutter Web
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-            - name: Setup Flutter
-              uses: subosito/flutter-action@v2
-              with:
-                  flutter-version: "3.24.0"
-                  channel: "stable"
-                  cache: true
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
 
-            - name: Get dependencies
-              working-directory: ./mobile/toastlabplus_app
-              run: flutter pub get
+      - name: Get dependencies
+        working-directory: ./mobile/toastlabplus_app
+        run: flutter pub get
 
-            # Staging build (develop branch)
-            - name: Build Flutter Web (Staging)
-              if: github.ref == 'refs/heads/develop'
-              working-directory: ./mobile/toastlabplus_app
-              run: |
-                  flutter build web --release \
-                    --dart-define=MCP_SERVER_URL=${{ env.MCP_SERVER_STAGING }} \
-                    --dart-define=CHAT_BACKEND_URL=${{ env.CHAT_BACKEND_STAGING }}
+      # Staging build (develop branch)
+      - name: Build Flutter Web (Staging)
+        if: github.ref == 'refs/heads/develop'
+        working-directory: ./mobile/toastlabplus_app
+        run: |
+          flutter build web --release \
+            --dart-define=MCP_SERVER_URL=${{ env.MCP_SERVER_STAGING }} \
+            --dart-define=CHAT_BACKEND_URL=${{ env.CHAT_BACKEND_STAGING }}
 
-            # Production build (main branch)
-            - name: Build Flutter Web (Production)
-              if: github.ref == 'refs/heads/main'
-              working-directory: ./mobile/toastlabplus_app
-              run: |
-                  flutter build web --release \
-                    --dart-define=MCP_SERVER_URL=${{ env.MCP_SERVER_PRODUCTION }} \
-                    --dart-define=CHAT_BACKEND_URL=${{ env.CHAT_BACKEND_PRODUCTION }}
+      # Production build (main branch)
+      - name: Build Flutter Web (Production)
+        if: github.ref == 'refs/heads/main'
+        working-directory: ./mobile/toastlabplus_app
+        run: |
+          flutter build web --release \
+            --dart-define=MCP_SERVER_URL=${{ env.MCP_SERVER_PRODUCTION }} \
+            --dart-define=CHAT_BACKEND_URL=${{ env.CHAT_BACKEND_PRODUCTION }}
 
-            # Authenticate to Google Cloud using Workload Identity
-            - name: Authenticate to Google Cloud
-              uses: google-github-actions/auth@v2
-              with:
-                  workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
-                  service_account: ${{ env.SERVICE_ACCOUNT }}
+      # Authenticate to Google Cloud using Workload Identity
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: "20"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
-            - name: Install Firebase CLI
-              run: npm install -g firebase-tools
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
 
-            # Deploy to staging channel (develop branch)
-            - name: Deploy to Firebase Staging
-              if: github.ref == 'refs/heads/develop'
-              working-directory: ./mobile/toastlabplus_app
-              run: firebase hosting:channel:deploy staging --expires 30d --project toastlabplus
+      # Deploy to staging channel (develop branch)
+      - name: Deploy to Firebase Staging
+        if: github.ref == 'refs/heads/develop'
+        working-directory: ./mobile/toastlabplus_app
+        run: firebase hosting:channel:deploy staging --expires 30d --project toastlabplus
 
-            # Deploy to live (main branch)
-            - name: Deploy to Firebase Production
-              if: github.ref == 'refs/heads/main'
-              working-directory: ./mobile/toastlabplus_app
-              run: firebase deploy --only hosting --project toastlabplus
+      # Deploy to live (main branch)
+      - name: Deploy to Firebase Production
+        if: github.ref == 'refs/heads/main'
+        working-directory: ./mobile/toastlabplus_app
+        run: firebase deploy --only hosting --project toastlabplus
 
-            - name: Show deployment URLs
-              run: |
-                  if [ "${{ github.ref }}" == "refs/heads/develop" ]; then
-                    echo "### 🚀 Staging Deployment" >> $GITHUB_STEP_SUMMARY
-                    echo "Staging channel deployed - check Firebase Console for URL" >> $GITHUB_STEP_SUMMARY
-                  else
-                    echo "### 🚀 Production Deployment" >> $GITHUB_STEP_SUMMARY
-                    echo "- Live URL: https://toastlabplus.web.app" >> $GITHUB_STEP_SUMMARY
-                  fi
+      - name: Show deployment URLs
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/develop" ]; then
+            echo "### 🚀 Staging Deployment" >> $GITHUB_STEP_SUMMARY
+            echo "Staging channel deployed - check Firebase Console for URL" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### 🚀 Production Deployment" >> $GITHUB_STEP_SUMMARY
+            echo "- Live URL: https://toastlabplus.web.app" >> $GITHUB_STEP_SUMMARY
+          fi
