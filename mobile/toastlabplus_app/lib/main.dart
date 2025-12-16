@@ -238,12 +238,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       const ProfileScreen(),
     ];
 
+    // Use IndexedStack to preserve state between tab switches
+    // This prevents rebuilding screens and refetching data when switching tabs
     return Scaffold(
       backgroundColor: AppTheme.ricePaper,
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
-        child: screens[_currentIndex],
-      ),
+      body: IndexedStack(index: _currentIndex, children: screens),
       bottomNavigationBar: SafeArea(
         child: Container(
           height: 65,
