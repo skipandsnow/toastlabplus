@@ -117,6 +117,11 @@
             <artifactId>postgres-socket-factory</artifactId>
             <version>1.21.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.cloud.sql</groupId>
+            <artifactId>jdbc-socket-factory-core</artifactId>
+            <version>1.21.0</version>
+        </dependency>
     </dependencies>
 
     <dependencyManagement>
