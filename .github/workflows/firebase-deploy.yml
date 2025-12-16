@@ -9,10 +9,10 @@ on:
 
 env:
   # Cloud Run URLs
-  MCP_SERVER_STAGING: https://mcp-server-staging-y7obt52h2q-de.a.run.app
-  MCP_SERVER_PRODUCTION: https://mcp-server-y7obt52h2q-de.a.run.app
-  CHAT_BACKEND_STAGING: https://chat-backend-staging-y7obt52h2q-de.a.run.app
-  CHAT_BACKEND_PRODUCTION: https://chat-backend-y7obt52h2q-de.a.run.app
+  MCP_SERVER_STAGING: https://mcp-server-staging-96030530148.asia-east1.run.app
+  MCP_SERVER_PRODUCTION: https://mcp-server-96030530148.asia-east1.run.app
+  CHAT_BACKEND_STAGING: https://chat-backend-staging-96030530148.asia-east1.run.app
+  CHAT_BACKEND_PRODUCTION: https://chat-backend-96030530148.asia-east1.run.app
   # Workload Identity
   WORKLOAD_IDENTITY_PROVIDER: projects/96030530148/locations/global/workloadIdentityPools/github-pool/providers/github-provider
   SERVICE_ACCOUNT: github-actions@toastlabplus.iam.gserviceaccount.com
