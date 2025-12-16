@@ -2,10 +2,9 @@ name: Deploy to GCP
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
-    branches: [main]
-
+    branches: [main, develop]
 env:
   PROJECT_ID: toastlabplus
   GAR_LOCATION: asia-east1
@@ -104,11 +103,12 @@ jobs:
           docker push ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/chat-backend:latest
 
   # ============================================
-  # Deploy to Staging
+  # Deploy to Staging (develop branch only)
   # ============================================
   deploy-staging:
     name: Deploy to Staging
     needs: [build-mcp-server, build-chat-backend]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: staging
     permissions:
@@ -160,13 +160,14 @@ jobs:
           echo "- Chat Backend: $(gcloud run services describe chat-backend-staging --region=${{ env.CLOUD_RUN_REGION }} --format='value(status.url)')" >> $GITHUB_STEP_SUMMARY
 
   # ============================================
-  # Deploy to Production (Manual Approval)
+  # Deploy to Production (main branch only)
   # ============================================
   deploy-production:
     name: Deploy to Production
-    needs: [deploy-staging]
+    needs: [build-mcp-server, build-chat-backend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
-    environment: production # GitHub 設定中需設定為需手動核准
+    environment: production
     permissions:
       contents: read
       id-token: write
