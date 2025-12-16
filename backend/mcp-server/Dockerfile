@@ -6,20 +6,18 @@
 # Stage 1: Build
 FROM eclipse-temurin:17-jdk-alpine AS build
 
-WORKDIR /app
+# 安裝 Maven
+RUN apk add --no-cache maven
 
-# 複製 Maven Wrapper
-COPY mvnw ./
-COPY .mvn .mvn
-RUN chmod +x mvnw
+WORKDIR /app
 
 # 複製 pom.xml 並下載依賴（利用 Docker cache）
 COPY pom.xml ./
-RUN ./mvnw dependency:go-offline -B
+RUN mvn dependency:go-offline -B
 
 # 複製原始碼並建置
 COPY src src
-RUN ./mvnw package -DskipTests -B
+RUN mvn package -DskipTests -B
 
 # Stage 2: Runtime
 FROM eclipse-temurin:17-jre-alpine

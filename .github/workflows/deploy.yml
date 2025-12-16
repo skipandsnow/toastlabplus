@@ -43,14 +43,11 @@ jobs:
         with:
           java-version: "17"
           distribution: "temurin"
-
-      - name: Make Maven Wrapper executable
-        working-directory: ./backend/mcp-server
-        run: chmod +x mvnw
+          cache: maven
 
       - name: Build with Maven
         working-directory: ./backend/mcp-server
-        run: ./mvnw package -DskipTests -B
+        run: mvn package -DskipTests -B
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
