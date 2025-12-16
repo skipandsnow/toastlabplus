@@ -179,7 +179,7 @@ flowchart LR
 | VPC Connector | `serverless-connector` | f1-micro | ~$7 |
 | **預估總計** | | | **~$35-80** |
 
-## 10.6 部署策略 (v1.1.0)
+## 10.6 部署策略 (v2.1)
 
 目前專案採用雙軌部署策略，分為前端 (Flutter Web) 與後端 (Cloud Run)，並嚴格隔離 Staging 與 Production 環境。
 
@@ -250,7 +250,7 @@ flowchart LR
 
 ### 10.8.2 版本升級指南
 
-發布新版本 (`v1.2.0`) 流程：
+發布新版本 (e.g., `v2.2`) 流程：
 1. 更新 `mobile/toastlabplus_app/pubspec.yaml` 版本號。
 2. 更新 `backend/mcp-server/pom.xml` 版本號。
 3. 提交變更並 Push 到 `develop`。

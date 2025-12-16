@@ -126,7 +126,7 @@ toastlabplus/
 
 | 版本 | 日期 | 變更說明 |
 |------|------|----------|
-| **v1.1.0** (Release) | 2025-12-17 | **正式發布 Cloud Run 雙環境部署**：Staging/Production 資料庫隔離、CORS 修正、前端轉場優化 (IndexedStack)、成本管理腳本。 |
+| **v2.1** (Release) | 2025-12-17 | **正式發布 Cloud Run 雙環境部署**：Staging/Production 資料庫隔離、CORS 修正、前端轉場優化 (IndexedStack)、成本管理腳本。 |
 | **v2.0** | 2025-12-16 | **會議管理與 Agenda 產生功能完成**：Meeting Schedule 自動產生會議、角色報名、AI 模板解析、Agenda Excel 產生、刪除會議、Template-Based Role Slots |
 | **v1.9** | 2025-12-14 | Club Info 擴充（聯絡人、時間）、首頁社團搜尋功能、UI 優化、安全性修復 |
 | **v1.8** | 2025-12-13 | 多分會管理架構（一位使用者可同時管理多個分會）|
