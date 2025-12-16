@@ -52,7 +52,15 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3001", "http://localhost:3000"));
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:3001",
+                "http://localhost:3000",
+                "http://localhost:8080",
+                "https://toastlabplus.web.app",
+                "https://toastlabplus.firebaseapp.com",
+                "https://toastlabplus--staging-oge9eulf.web.app"));
+        // Also allow pattern matching for Firebase preview channels
+        configuration.setAllowedOriginPatterns(List.of("https://toastlabplus--*.web.app"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
