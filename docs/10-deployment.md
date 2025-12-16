@@ -179,128 +179,84 @@ flowchart LR
 | VPC Connector | `serverless-connector` | f1-micro | ~$7 |
 | **預估總計** | | | **~$35-80** |
 
-## 10.6 部署策略
+## 10.6 部署策略 (v1.1.0)
 
-```mermaid
-flowchart LR
-    subgraph Dev ["開發環境"]
-        LocalDev["本機開發"]
-        DevTest["功能測試"]
-    end
-    
-    subgraph CI_CD ["CI/CD Pipeline"]
-        GitHub["GitHub Repository"]
-        Actions["GitHub Actions"]
-        GAR["Artifact Registry"]
-    end
-    
-    subgraph GCP ["GCP 環境"]
-        Staging["Staging"]
-        Prod["Production"]
-    end
-    
-    LocalDev --> GitHub
-    GitHub --> Actions
-    Actions --> GAR
-    GAR --> Staging
-    Staging -->|"手動核准"| Prod
-```
+目前專案採用雙軌部署策略，分為前端 (Flutter Web) 與後端 (Cloud Run)，並嚴格隔離 Staging 與 Production 環境。
 
-**部署流程**：
+### 10.6.1 環境隔離
 
-1. **本機開發**
-   - Podman Compose 模擬完整環境
-   - 連接 Cloud SQL 開發資料庫
+| 環境 | 分支 | 前端 URL | 後端 API | 資料庫 |
+|---|---|---|---|---|
+| **Staging** | `develop` | `toastlabplus--staging-xxxx.web.app` | `mcp-server-staging` | `toastlabplus_staging` |
+| **Production** | `main` | `toastlabplus.web.app` | `mcp-server` | `toastlabplus` |
 
-2. **CI/CD Pipeline** (GitHub Actions)
-   ```yaml
-   # .github/workflows/deploy.yml 流程概述
-   - Build Container Images (Podman/Buildah)
-   - Push to Artifact Registry
-   - Deploy to Cloud Run (Staging)
-   - Run Integration Tests
-   - Manual Approval
-   - Deploy to Cloud Run (Production)
-   ```
+### 10.6.2 CI/CD Pipeline
 
-3. **環境變數管理**
-   - 使用 Secret Manager 存放敏感資訊
-   - Cloud Run 引用 Secret Manager Secrets
+**1. Backend Pipeline (`deploy.yml`)**
+- **觸發**: `backend/**`, `infrastructure/**` 變更
+- **流程**:
+  - Build Java/Python Docker Image
+  - Push to Artifact Registry
+  - **Deploy to Staging**: 部署至 `mcp-server-staging` (連結 `toastlabplus_staging` DB)
+  - **Deploy to Production**: 部署至 `mcp-server` (連結 `toastlabplus` DB，僅限 `main` 分支)
 
-## 10.7 建置檢查清單
+**2. Frontend Pipeline (`firebase-deploy.yml`)**
+- **觸發**: `mobile/**` 變更
+- **流程**:
+  - Setup Flutter (**3.38.5**, Dart 3.10.4)
+  - Build Web App (注入對應環境的 API URL)
+  - **Deploy to Staging**: Firebase Hosting Preview Channel (`staging`)
+  - **Deploy to Production**: Firebase Hosting Live Channel (僅限 `main` 分支)
 
-| 階段 | 項目 | 狀態 |
-|:---|:---|:---:|
-| **GCP 基礎** | 建立 GCP Project | ✅ |
-| | 啟用必要 API | ⬜ |
-| | 設定 VPC Network | ⬜ |
-| | 建立 Artifact Registry | ⬜ |
-| **Workload Identity** | 建立 Workload Identity Pool | ⬜ |
-| | 建立 OIDC Provider | ⬜ |
-| | 建立 Service Account | ⬜ |
-| | 綁定 GitHub Repo | ⬜ |
-| **資料庫** | 建立 Cloud SQL Instance | ⬜ |
-| | 建立 Database | ⬜ |
-| | 設定私有 IP 連線 | ⬜ |
-| | 執行 Schema Migration | ⬜ |
-| **Gemini API** | 取得 API Key (Google AI Studio) | ⬜ |
-| | 將 Key 存入 Secret Manager | ⬜ |
-| **Cloud Run** | 部署 MCP Server | ⬜ |
-| | 部署 Chat Backend | ⬜ |
-| | 設定環境變數 | ⬜ |
-| | 設定 VPC Connector | ⬜ |
-| **CI/CD** | 設定 GitHub Actions | ⬜ |
-| | 測試自動部署 | ⬜ |
+## 10.7 建置檢查清單 (2025-12 Updated)
 
-## 10.8 快速開始指令
+| 階段 | 項目 | 狀態 | 備註 |
+|:---|:---|:---:|:---|
+| **GCP 基礎** | 建立 GCP Project | ✅ | `toastlabplus` |
+| | 啟用必要 API | ✅ | Cloud Run, SQL, Artifact Registry |
+| | 設定 VPC Network | ✅ | Serverless VPC Connector |
+| | 建立 Artifact Registry | ✅ | `asia-east1` |
+| **Workload Identity** | 設定 GitHub Actions 驗證 | ✅ | 無需存取 Key 檔案 |
+| **資料庫** | 建立 Cloud SQL Instance | ✅ | PotgreSQL 14 |
+| | 建立 Database | ✅ | `toastlabplus` & `toastlabplus_staging` |
+| | 設定私有 IP 連線 | ✅ | 透過 VPC Connector |
+| **Cloud Run** | 部署 MCP Server | ✅ | Staging & Prod |
+| | 部署 Chat Backend | ✅ | Staging & Prod |
+| **CI/CD** | Backend Workflow | ✅ | `deploy.yml` |
+| | Frontend Workflow | ✅ | `firebase-deploy.yml` |
 
-### Step 1: GCP 基礎資源
+## 10.8 運維管理 (Operations)
+
+為了節省成本，可在非工作時間暫停 Staging/Production 環境的收費資源。
+
+### 10.8.1 快速啟閉服務
+
+專案根目錄提供了 `scripts/gcp-ops.sh` 腳本，可用於快速管理 Cloud Run 與 Cloud SQL。
+
+**使用方式 (Git Bash)**:
 
 ```bash
-# 執行 GCP 基礎設定腳本
-cd infrastructure/scripts
-chmod +x setup-gcp.sh
-./setup-gcp.sh
+# 暫停所有服務 (Scale to 0, Stop SQL) - 節省成本
+./scripts/gcp-ops.sh stop
+
+# 恢復所有服務 (Start SQL, Restore Scaling)
+./scripts/gcp-ops.sh start
 ```
 
-### Step 2: Workload Identity Federation
+**暫停後的狀態**:
+- **Cloud Run**: Max Instances = 1 (實際上設為 min=0 以停止計費，除了 request 費用)
+- **Cloud SQL**: Stopped (不計運算費，僅計存儲費)
+- **Firebase Hosting**: 保持運作 (靜態託管，費用極低)
 
-```bash
-# ⚠️ 先編輯腳本，修改 GITHUB_ORG 和 GITHUB_REPO 變數
-chmod +x setup-workload-identity.sh
-./setup-workload-identity.sh
-```
+### 10.8.2 版本升級指南
 
-### Step 3: Secret Manager 設定
-
-```bash
-# 建立 DB 密碼 Secret
-echo -n "YOUR_DB_PASSWORD" | gcloud secrets create DB_PASSWORD --data-file=-
-
-# 建立 Gemini API Key Secret (從 Google AI Studio 取得)
-echo -n "YOUR_GEMINI_API_KEY" | gcloud secrets create GEMINI_API_KEY --data-file=-
-```
-
-### Step 4: 本機 Docker 測試
-
-```bash
-# 測試 MCP Server Docker build
-cd backend/mcp-server
-docker build -t mcp-server:test .
-
-# 測試 Chat Backend Docker build
-cd backend/chat-backend
-docker build -t chat-backend:test .
-```
-
-### Step 5: 觸發 CI/CD
-
-```bash
-# Push 到 main branch 觸發自動部署
-git add .
-git commit -m "feat: add deployment configuration"
-git push origin main
-```
+發布新版本 (`v1.2.0`) 流程：
+1. 更新 `mobile/toastlabplus_app/pubspec.yaml` 版本號。
+2. 更新 `backend/mcp-server/pom.xml` 版本號。
+3. 提交變更並 Push 到 `develop`。
+4. 驗證 Staging 環境無誤。
+5. Merge `develop` -> `main` 觸發 Production 部署。
+6. `git tag v1.2.0` 並 Push tag。
 
 ---
 
