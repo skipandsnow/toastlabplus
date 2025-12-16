@@ -2,6 +2,10 @@
 
 > Flutter 跨平台會議管理 App + Google Cloud 後端服務
 
+**網站入口**:
+- 🚀 **Production (Main)**: [https://toastlabplus.web.app](https://toastlabplus.web.app)
+- 🚧 **Staging (Preview)**: [https://toastlabplus--staging-oge9eulf.web.app/](https://toastlabplus--staging-oge9eulf.web.app/)
+
 ToastLabPlus 是專為 Toastmasters 國際演講會設計的會議管理系統，支援多分會管理、會議角色報名、Agenda 自動產生等功能。
 
 ## 功能總覽
@@ -31,6 +35,22 @@ ToastLabPlus 是專為 Toastmasters 國際演講會設計的會議管理系統�
 | 💬 **即時聊天** | 分會內部聊天功能 | 中 |
 | 📲 **推播通知** | Firebase Cloud Messaging | 中 |
 | 📊 **數據分析** | 會員參與統計、角色報名趨勢 | 低 |
+
+---
+
+## 運維管理 (Operations)
+
+專案提供了快速腳本來管理 GCP 資源開啟與關閉（節省 Cloud Run/SQL 成本）。
+
+```bash
+# 停止服務 (省錢模式)
+./scripts/gcp-ops.sh stop
+
+# 啟動服務
+./scripts/gcp-ops.sh start
+```
+
+詳細說明請參閱 [部署文件](docs/10-deployment.md#108-運維管理-operations)。
 
 ---
 
@@ -75,14 +95,10 @@ flowchart TB
 ```
 toastlabplus/
 ├── backend/
-│   ├── mcp-server/       # Spring Boot MCP Server
-│   └── chat-backend/     # Python Chat Backend (FastAPI)
 ├── mobile/
-│   └── toastlabplus_app/ # Flutter App
 ├── infrastructure/
-│   ├── terraform/        # GCP IaC
-│   └── scripts/          # 部署腳本
-└── docs/                  # 實作計畫文件 (12 章節)
+├── scripts/              # 運維腳本
+└── docs/                 # 實作計畫文件
 ```
 
 ---
@@ -110,6 +126,7 @@ toastlabplus/
 
 | 版本 | 日期 | 變更說明 |
 |------|------|----------|
+| **v1.1.0** (Release) | 2025-12-17 | **正式發布 Cloud Run 雙環境部署**：Staging/Production 資料庫隔離、CORS 修正、前端轉場優化 (IndexedStack)、成本管理腳本。 |
 | **v2.0** | 2025-12-16 | **會議管理與 Agenda 產生功能完成**：Meeting Schedule 自動產生會議、角色報名、AI 模板解析、Agenda Excel 產生、刪除會議、Template-Based Role Slots |
 | **v1.9** | 2025-12-14 | Club Info 擴充（聯絡人、時間）、首頁社團搜尋功能、UI 優化、安全性修復 |
 | **v1.8** | 2025-12-13 | 多分會管理架構（一位使用者可同時管理多個分會）|
