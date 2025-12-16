@@ -22,7 +22,14 @@ spring:
     gcp:
       project-id: ${GCP_PROJECT_ID:toastlabplus}
       sql:
-        enabled: false # 禁用 Cloud SQL auto-config，使用手動 datasource 配置
+        enabled: false # 禁用 Cloud SQL auto-config
+      credentials:
+        encoded-key: # 留空，使用 Cloud Run default service account
+
+# Cloud Run 上禁用 GCP Storage (暫時)
+gcp:
+  storage:
+    enabled: false
 
 logging:
   level:
