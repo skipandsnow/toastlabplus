@@ -111,10 +111,10 @@
             <version>5.2.5</version>
         </dependency>
 
-        <!-- Cloud SQL PostgreSQL Socket Factory (for Cloud Run) -->
+        <!-- Cloud SQL JDBC Socket Factory (for Cloud Run) -->
         <dependency>
             <groupId>com.google.cloud.sql</groupId>
-            <artifactId>postgres-socket-factory</artifactId>
+            <artifactId>cloud-sql-connector-jdbc-socketfactory</artifactId>
             <version>1.15.2</version>
         </dependency>
     </dependencies>
