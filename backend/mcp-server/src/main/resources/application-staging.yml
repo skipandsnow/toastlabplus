@@ -23,8 +23,9 @@ spring:
       project-id: ${GCP_PROJECT_ID:toastlabplus}
       sql:
         enabled: false # 禁用 Cloud SQL auto-config
+      # 重要：不指定 credentials location，讓 Cloud Run 使用 ADC (Application Default Credentials)
       credentials:
-        encoded-key: # 留空，使用 Cloud Run default service account
+        location: # 留空會使用 ADC
 
 # Cloud Run 上禁用 GCP Storage (暫時)
 gcp:

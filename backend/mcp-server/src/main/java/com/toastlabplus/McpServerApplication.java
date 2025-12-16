@@ -2,8 +2,9 @@ package com.toastlabplus;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import com.google.cloud.spring.autoconfigure.core.GcpContextAutoConfiguration;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = { GcpContextAutoConfiguration.class })
 public class McpServerApplication {
 
     public static void main(String[] args) {
