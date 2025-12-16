@@ -451,9 +451,9 @@ class _ScheduleFormSheetState extends State<_ScheduleFormSheet> {
   final _nameController = TextEditingController();
   final _locationController = TextEditingController();
   final _nameFocusNode = FocusNode();
-  String _frequency = 'MONTHLY';
+  final String _frequency = 'MONTHLY';
   int _dayOfWeek = 3; // Wednesday
-  List<int> _weekOfMonth = [1, 3]; // 1st and 3rd
+  final List<int> _weekOfMonth = [1, 3]; // 1st and 3rd
   TimeOfDay _startTime = const TimeOfDay(hour: 19, minute: 0);
   TimeOfDay _endTime = const TimeOfDay(hour: 21, minute: 0);
   int _speakerCount = 3;
@@ -668,7 +668,7 @@ class _ScheduleFormSheetState extends State<_ScheduleFormSheet> {
                       Expanded(
                         child: ListTile(
                           title: const Text('Start Time'),
-                          subtitle: Text('${_startTime.format(context)}'),
+                          subtitle: Text(_startTime.format(context)),
                           onTap: () async {
                             final t = await showTimePicker(
                               context: context,
@@ -681,7 +681,7 @@ class _ScheduleFormSheetState extends State<_ScheduleFormSheet> {
                       Expanded(
                         child: ListTile(
                           title: const Text('End Time'),
-                          subtitle: Text('${_endTime.format(context)}'),
+                          subtitle: Text(_endTime.format(context)),
                           onTap: () async {
                             final t = await showTimePicker(
                               context: context,
