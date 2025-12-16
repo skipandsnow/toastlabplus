@@ -3,8 +3,16 @@ name: Deploy to GCP
 on:
   push:
     branches: [main, develop]
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy.yml"
+      - "infrastructure/**"
   pull_request:
     branches: [main, develop]
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy.yml"
+      - "infrastructure/**"
 env:
   PROJECT_ID: toastlabplus
   GAR_LOCATION: asia-east1
