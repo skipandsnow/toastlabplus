@@ -21,6 +21,8 @@ spring:
   cloud:
     gcp:
       project-id: ${GCP_PROJECT_ID:toastlabplus}
+      sql:
+        enabled: false # 禁用 Cloud SQL auto-config，使用手動 datasource 配置
 
 logging:
   level:
