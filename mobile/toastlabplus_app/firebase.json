@@ -8,6 +8,14 @@
         ],
         "rewrites": [
             {
+                "source": "/privacy.html",
+                "destination": "/privacy.html"
+            },
+            {
+                "source": "/support.html",
+                "destination": "/support.html"
+            },
+            {
                 "source": "**",
                 "destination": "/index.html"
             }
