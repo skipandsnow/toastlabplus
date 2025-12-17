@@ -22,7 +22,7 @@ on:
 
 env:
   FLUTTER_VERSION: "3.38.5"
-  XCODE_VERSION: "16.1"
+  XCODE_VERSION: "16.2"
 
 jobs:
   build-and-deploy-ios:
