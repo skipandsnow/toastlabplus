@@ -50,22 +50,10 @@ jobs:
     permissions:
       contents: read
       id-token: write # 必要：Workload Identity 需要此權限
+    outputs:
+      image_exists: ${{ steps.check-image.outputs.exists }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: "17"
-          distribution: "temurin"
-          cache: maven
-
-      - name: Build with Maven
-        working-directory: ./backend/mcp-server
-        run: mvn clean package -DskipTests -B
-
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -75,10 +63,40 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Check if image already exists
+        id: check-image
+        run: |
+          if gcloud artifacts docker images describe ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/mcp-server:${{ github.sha }} > /dev/null 2>&1; then
+            echo "Image already exists, skipping build"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "Image not found, will build"
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout
+        if: steps.check-image.outputs.exists == 'false'
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        if: steps.check-image.outputs.exists == 'false'
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: maven
+
+      - name: Build with Maven
+        if: steps.check-image.outputs.exists == 'false'
+        working-directory: ./backend/mcp-server
+        run: mvn clean package -DskipTests -B
+
       - name: Configure Docker for Artifact Registry
+        if: steps.check-image.outputs.exists == 'false'
         run: gcloud auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev
 
       - name: Build and Push Docker Image
+        if: steps.check-image.outputs.exists == 'false'
         working-directory: ./backend/mcp-server
         run: |
           docker build -t ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/mcp-server:${{ github.sha }} .
@@ -95,11 +113,10 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    outputs:
+      image_exists: ${{ steps.check-image.outputs.exists }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -109,10 +126,27 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Check if image already exists
+        id: check-image
+        run: |
+          if gcloud artifacts docker images describe ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/chat-backend:${{ github.sha }} > /dev/null 2>&1; then
+            echo "Image already exists, skipping build"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "Image not found, will build"
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout
+        if: steps.check-image.outputs.exists == 'false'
+        uses: actions/checkout@v4
+
       - name: Configure Docker for Artifact Registry
+        if: steps.check-image.outputs.exists == 'false'
         run: gcloud auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev
 
       - name: Build and Push Docker Image
+        if: steps.check-image.outputs.exists == 'false'
         working-directory: ./backend/chat-backend
         run: |
           docker build -t ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/chat-backend:${{ github.sha }} .
