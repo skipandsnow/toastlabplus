@@ -1,11 +1,21 @@
+def flutter_root
+  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'generated_xcode_build_settings.rb'), __FILE__)
+  if File.exist?(generated_xcode_build_settings_path)
+    if File.read(generated_xcode_build_settings_path) =~ /FLUTTER_ROOT\=(.*)/
+      return $1.strip
+    end
+  end
+  # Fallback for CI if generated file missing
+  return ENV['FLUTTER_ROOT'] if ENV['FLUTTER_ROOT']
+  
+  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path} or environment variable"
+end
 
-use_frameworks!
+require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
 
-# Flutter Pod Helper
-load File.join(FLUTTER_ROOT, 'packages', 'flutter_tools', 'bin', 'podhelper.rb')
-
-# Define global platform
 platform :ios, '18.0'
+
+flutter_ios_podfile_setup
 
 target 'Runner' do
   use_frameworks!
@@ -19,10 +29,9 @@ target 'Runner' do
 end
 
 post_install do |installer|
+  flutter_post_install(installer)
+  
   installer.pods_project.targets.each do |target|
-    flutter_additional_ios_build_settings(target)
-    
-    # Ensure all pods use iOS 18.0 minimum to match the project
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '18.0'
     end
