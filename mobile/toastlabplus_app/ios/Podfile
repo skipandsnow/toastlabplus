@@ -1,12 +1,12 @@
-# Uncomment this line to define a global platform for your project
-platform :ios, '18.0'
+# Standard Flutter Podfile setup
+require_relative 'Flutter/generated_xcode_build_settings.rb'
+use_frameworks!
 
-# CocoaPods analytics disables sending stats about your project to CocoaPods.
-#
-# If you make use of this project, consider enabling it for CocoaPods to track
-# usage adoption.
-#
-# install! 'cocoapods', :disable_input_output_paths => true
+# Flutter Pod Helper
+load File.join(FLUTTER_ROOT, 'packages', 'flutter_tools', 'bin', 'podhelper.rb')
+
+# Define global platform
+platform :ios, '18.0'
 
 target 'Runner' do
   use_frameworks!
