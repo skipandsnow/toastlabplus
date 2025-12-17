@@ -307,7 +307,7 @@ class _MeetingListScreenState extends State<MeetingListScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${meeting.startTime ?? ''} - ${meeting.endTime ?? ''}',
+                      '${(meeting.startTime ?? '').length >= 5 ? meeting.startTime!.substring(0, 5) : meeting.startTime ?? ''} - ${(meeting.endTime ?? '').length >= 5 ? meeting.endTime!.substring(0, 5) : meeting.endTime ?? ''}',
                       style: TextStyle(fontSize: 12, color: AppTheme.lightWood),
                     ),
                     const SizedBox(height: 8),

@@ -246,6 +246,7 @@ public class AgendaGenerationController {
         return data;
     }
 
+    @SuppressWarnings("unchecked")
     private byte[] generateFilledAgenda(byte[] templateBytes, Meeting meeting,
             List<Map<String, Object>> variableMappings) throws IOException {
         Map<String, Object> agendaData = buildAgendaData(meeting);
@@ -255,8 +256,9 @@ public class AgendaGenerationController {
             if (workbook.getNumberOfSheets() > 0) {
                 Sheet sheet = workbook.getSheetAt(0);
 
-                // First: use variable_mappings from LLM to fill by exact coordinates
+                // Handle dynamic speaker rows if needed
                 if (variableMappings != null && !variableMappings.isEmpty()) {
+                    variableMappings = handleDynamicSpeakerRows(sheet, agendaData, variableMappings);
                     fillByCoordinates(sheet, agendaData, variableMappings);
                 } else {
                     // Fallback to label-based searching only when no coordinate mappings available
@@ -268,6 +270,171 @@ public class AgendaGenerationController {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             workbook.write(outputStream);
             return outputStream.toByteArray();
+        }
+    }
+
+    /**
+     * Handle dynamic speaker rows - if we have more speakers than template
+     * positions,
+     * insert additional rows by copying the last speaker row.
+     */
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> handleDynamicSpeakerRows(Sheet sheet, Map<String, Object> agendaData,
+            List<Map<String, Object>> variableMappings) {
+
+        // Find max speaker index in template
+        int maxTemplateSpeaker = 0;
+        int lastSpeakerRow = -1;
+
+        for (Map<String, Object> mapping : variableMappings) {
+            String role = (String) mapping.get("role");
+            if (role != null && role.toUpperCase().startsWith("SPEAKER_") && !role.contains("TITLE")
+                    && !role.contains("PROJECT")) {
+                try {
+                    int idx = Integer.parseInt(role.replaceAll("\\D", ""));
+                    if (idx > maxTemplateSpeaker) {
+                        maxTemplateSpeaker = idx;
+                        Map<String, Object> valuePos = (Map<String, Object>) mapping.get("value_position");
+                        if (valuePos != null) {
+                            lastSpeakerRow = ((Number) valuePos.get("row")).intValue() - 1;
+                        }
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+
+        // Find actual speaker count from data
+        List<Map<String, String>> speakers = (List<Map<String, String>>) agendaData.get("SPEAKERS");
+        int actualSpeakerCount = speakers != null ? speakers.size() : 0;
+
+        // If we have more speakers than template positions, insert rows
+        if (actualSpeakerCount > maxTemplateSpeaker && lastSpeakerRow >= 0 && maxTemplateSpeaker > 0) {
+            int rowsToInsert = actualSpeakerCount - maxTemplateSpeaker;
+            int insertAfterRow = lastSpeakerRow;
+
+            try {
+                // Shift rows down to make space (this handles merged regions automatically in
+                // newer POI)
+                sheet.shiftRows(insertAfterRow + 1, sheet.getLastRowNum(), rowsToInsert);
+
+                // Copy the last speaker row for each additional speaker
+                Row sourceRow = sheet.getRow(insertAfterRow);
+                if (sourceRow != null) {
+                    for (int i = 0; i < rowsToInsert; i++) {
+                        int newRowIdx = insertAfterRow + 1 + i;
+                        Row newRow = sheet.createRow(newRowIdx);
+                        copyRow(sourceRow, newRow);
+                    }
+                }
+            } catch (Exception e) {
+                // Log error but continue
+            }
+
+            // Create new mappings for additional speakers
+            List<Map<String, Object>> newMappings = new ArrayList<>(variableMappings);
+
+            // Find template mapping for last speaker to use as reference
+            Map<String, Object> lastSpeakerMapping = null;
+            Map<String, Object> lastSpeakerTitleMapping = null;
+            Map<String, Object> lastSpeakerProjectMapping = null;
+
+            for (Map<String, Object> mapping : variableMappings) {
+                String role = (String) mapping.get("role");
+                if (role != null) {
+                    if (role.equals("SPEAKER_" + maxTemplateSpeaker)) {
+                        lastSpeakerMapping = mapping;
+                    } else if (role.equals("SPEAKER_" + maxTemplateSpeaker + "_TITLE")) {
+                        lastSpeakerTitleMapping = mapping;
+                    } else if (role.equals("SPEAKER_" + maxTemplateSpeaker + "_PROJECT")) {
+                        lastSpeakerProjectMapping = mapping;
+                    }
+                }
+            }
+
+            // Add mappings for new speakers
+            for (int i = 1; i <= rowsToInsert; i++) {
+                int speakerIdx = maxTemplateSpeaker + i;
+                int rowOffset = i;
+
+                if (lastSpeakerMapping != null) {
+                    newMappings.add(createOffsetMapping("SPEAKER_" + speakerIdx, lastSpeakerMapping, rowOffset));
+                }
+                if (lastSpeakerTitleMapping != null) {
+                    newMappings.add(createOffsetMapping("SPEAKER_" + speakerIdx + "_TITLE", lastSpeakerTitleMapping,
+                            rowOffset));
+                }
+                if (lastSpeakerProjectMapping != null) {
+                    newMappings.add(createOffsetMapping("SPEAKER_" + speakerIdx + "_PROJECT", lastSpeakerProjectMapping,
+                            rowOffset));
+                }
+
+                // Add data for additional speakers
+                if (speakerIdx <= actualSpeakerCount) {
+                    Map<String, String> speakerData = speakers.get(speakerIdx - 1);
+                    agendaData.put("SPEAKER_" + speakerIdx + "_NAME", speakerData.get("name"));
+                    agendaData.put("SPEECH_TITLE_" + speakerIdx, speakerData.get("title"));
+                    agendaData.put("SPEECH_PROJECT_" + speakerIdx, speakerData.get("project"));
+                }
+            }
+
+            // Update row positions for all mappings after the inserted rows
+            for (Map<String, Object> mapping : newMappings) {
+                Map<String, Object> valuePos = (Map<String, Object>) mapping.get("value_position");
+                if (valuePos != null) {
+                    int row = ((Number) valuePos.get("row")).intValue();
+                    if (row > insertAfterRow + 1) { // 1-indexed, so +1
+                        valuePos.put("row", row + rowsToInsert);
+                    }
+                }
+            }
+
+            return newMappings;
+        }
+
+        return variableMappings;
+    }
+
+    private Map<String, Object> createOffsetMapping(String role, Map<String, Object> sourceMapping, int rowOffset) {
+        Map<String, Object> newMapping = new HashMap<>();
+        newMapping.put("role", role);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> sourcePos = (Map<String, Object>) sourceMapping.get("value_position");
+        if (sourcePos != null) {
+            Map<String, Object> newPos = new HashMap<>();
+            newPos.put("row", ((Number) sourcePos.get("row")).intValue() + rowOffset);
+            newPos.put("col", sourcePos.get("col"));
+            newMapping.put("value_position", newPos);
+        }
+
+        return newMapping;
+    }
+
+    private void copyRow(Row sourceRow, Row targetRow) {
+        targetRow.setHeight(sourceRow.getHeight());
+        for (int i = 0; i < sourceRow.getLastCellNum(); i++) {
+            Cell sourceCell = sourceRow.getCell(i);
+            Cell targetCell = targetRow.createCell(i);
+            if (sourceCell != null) {
+                targetCell.setCellStyle(sourceCell.getCellStyle());
+                switch (sourceCell.getCellType()) {
+                    case STRING:
+                        targetCell.setCellValue(sourceCell.getStringCellValue());
+                        break;
+                    case NUMERIC:
+                        targetCell.setCellValue(sourceCell.getNumericCellValue());
+                        break;
+                    case BOOLEAN:
+                        targetCell.setCellValue(sourceCell.getBooleanCellValue());
+                        break;
+                    case FORMULA:
+                        targetCell.setCellFormula(sourceCell.getCellFormula());
+                        break;
+                    default:
+                        break;
+                }
+            }
         }
     }
 
@@ -315,6 +482,11 @@ public class AgendaGenerationController {
                 Row sheetRow = sheet.getRow(actualRow);
                 if (sheetRow == null) {
                     sheetRow = sheet.createRow(actualRow);
+                }
+
+                // Unhide the row if it was hidden (for dynamic speaker rows)
+                if (sheetRow.getZeroHeight()) {
+                    sheetRow.setZeroHeight(false);
                 }
 
                 Cell existingCell = sheetRow.getCell(actualCol);

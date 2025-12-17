@@ -193,6 +193,7 @@ public class MeetingScheduleController {
     public ResponseEntity<?> generateMeetings(
             @PathVariable Long clubId,
             @PathVariable Long scheduleId,
+            @RequestParam(required = false) Integer months,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         Member currentMember = memberRepository.findByEmail(userDetails.getUsername())
@@ -207,7 +208,9 @@ public class MeetingScheduleController {
             return ResponseEntity.notFound().build();
         }
 
-        List<LocalDate> dates = calculateMeetingDates(schedule);
+        // Use provided months or fall back to schedule's default
+        int generateMonths = (months != null && months > 0) ? months : schedule.getAutoGenerateMonths();
+        List<LocalDate> dates = calculateMeetingDates(schedule, generateMonths);
         int created = 0;
 
         for (LocalDate date : dates) {
@@ -267,10 +270,10 @@ public class MeetingScheduleController {
         return map;
     }
 
-    private List<LocalDate> calculateMeetingDates(MeetingSchedule schedule) {
+    private List<LocalDate> calculateMeetingDates(MeetingSchedule schedule, int months) {
         List<LocalDate> dates = new ArrayList<>();
         LocalDate today = LocalDate.now();
-        LocalDate endDate = today.plusMonths(schedule.getAutoGenerateMonths());
+        LocalDate endDate = today.plusMonths(months);
 
         if (MeetingSchedule.FREQ_MONTHLY.equals(schedule.getFrequency())) {
             int[] weeks = schedule.getWeekOfMonth();

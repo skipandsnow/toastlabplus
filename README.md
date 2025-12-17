@@ -21,11 +21,12 @@ ToastLabPlus 是專為 Toastmasters 國際演講會設計的會議管理系統�
 | 🎖️ **多分會管理** | Club Admin 可同時管理多個分會 |
 | ℹ️ **詳細社團資訊** | 顯示與編輯聯絡人、時間範圍、地點 |
 | 🔍 **社團搜尋** | 關鍵字搜尋所有社團、已加入社團 |
-| 📅 **會議管理** | 建立會議排程、自動產生會議 |
+| 📅 **會議管理** | 建立會議排程、自動產生會議、編輯排程 |
 | 🎭 **角色報名** | 會員報名會議角色 (TME, Speaker 等) |
-| 📝 **Agenda 產生** | AI 解析模板 (Gemini)、自動產生議程 Excel |
+| 📝 **Agenda 產生** | AI 解析模板 (Gemini)、自動產生議程 Excel、動態 Speaker 行 |
 | 📋 **模板管理** | 上傳 Excel 模板、AI 解析變數位置 |
 | 🗑️ **刪除會議** | Club Admin 可刪除會議 |
+| ⚙️ **排程編輯** | 編輯現有會議排程、動態生成月數選擇 |
 
 ### 🚧 開發中 / 未來功能
 
@@ -131,6 +132,7 @@ toastlabplus/
 
 | 版本 | 日期 | 變更說明 |
 |------|------|----------|
+| **v2.2** (Release) | 2025-12-18 | **會議管理功能增強**：Meeting Schedule 編輯功能、Generate Meetings 月數動態選擇 (1-12)、Agenda 動態 Speaker 行自動取消隱藏、時間格式統一 (HH:mm)、UI 文字英文化 |
 | **v2.1** (Release) | 2025-12-17 | **正式發布 Cloud Run 雙環境部署**：Staging/Production 資料庫隔離、CORS 修正、前端轉場優化 (IndexedStack)、成本管理腳本。 |
 | **v2.0** | 2025-12-16 | **會議管理與 Agenda 產生功能完成**：Meeting Schedule 自動產生會議、角色報名、AI 模板解析、Agenda Excel 產生、刪除會議、Template-Based Role Slots |
 | **v1.9** | 2025-12-14 | Club Info 擴充（聯絡人、時間）、首頁社團搜尋功能、UI 優化、安全性修復 |

@@ -258,6 +258,14 @@ class _ClubMembershipScreenState extends State<ClubMembershipScreen> {
     return null;
   }
 
+  /// Filter out clubs that user has already applied to or is a member of
+  List<dynamic> get _availableClubs {
+    final myClubIds = _myMemberships.map((m) => m['clubId'] as int).toSet();
+    return _clubs
+        .where((club) => !myClubIds.contains(club['id'] as int))
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -305,7 +313,7 @@ class _ClubMembershipScreenState extends State<ClubMembershipScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  if (_clubs.isEmpty)
+                  if (_availableClubs.isEmpty)
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
@@ -320,7 +328,7 @@ class _ClubMembershipScreenState extends State<ClubMembershipScreen> {
                       ),
                     )
                   else
-                    ..._clubs.map((club) => _buildClubCard(club)),
+                    ..._availableClubs.map((club) => _buildClubCard(club)),
                 ],
               ),
             ),

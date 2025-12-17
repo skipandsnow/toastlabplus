@@ -1,4 +1,4 @@
-package com.toastlabplus.toastlabplus_app
+package com.skipandsnow.toastlabplus
 
 import io.flutter.embedding.android.FlutterActivity
 

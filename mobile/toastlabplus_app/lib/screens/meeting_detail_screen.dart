@@ -292,17 +292,19 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('刪除會議'),
-        content: const Text('確定要刪除這個會議嗎？此操作無法復原。'),
+        title: const Text('Delete Meeting'),
+        content: const Text(
+          'Are you sure you want to delete this meeting? This action cannot be undone.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('取消'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('刪除'),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -326,7 +328,9 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
       );
 
       if (response.statusCode == 200) {
-        scaffoldMessenger.showSnackBar(const SnackBar(content: Text('會議已刪除')));
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(content: Text('Meeting deleted')),
+        );
         navigator.pop(true); // Return true to indicate deletion
       } else {
         final data = jsonDecode(response.body);
@@ -386,10 +390,10 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
                               child: GestureDetector(
                                 onTap: _generateAgenda,
                                 child: HandDrawnContainer(
-                                  color: AppTheme.dustyBlue.withValues(
+                                  color: AppTheme.sageGreen.withValues(
                                     alpha: 0.15,
                                   ),
-                                  borderColor: AppTheme.dustyBlue,
+                                  borderColor: AppTheme.sageGreen,
                                   borderRadius: 12,
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 16,
@@ -400,7 +404,7 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
                                     children: [
                                       Icon(
                                         Icons.article,
-                                        color: AppTheme.dustyBlue,
+                                        color: AppTheme.sageGreen,
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
@@ -408,7 +412,7 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
                                         style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.bold,
-                                          color: AppTheme.dustyBlue,
+                                          color: AppTheme.sageGreen,
                                         ),
                                       ),
                                     ],
@@ -439,7 +443,7 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
-                                        '刪除會議',
+                                        'Delete Meeting',
                                         style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.bold,
@@ -480,8 +484,14 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
     final meetingNumber = _meeting!['meetingNumber'];
     final theme = _meeting!['theme'] ?? '';
     final meetingDate = _meeting!['meetingDate'] ?? '';
-    final startTime = _meeting!['startTime'] ?? '';
-    final endTime = _meeting!['endTime'] ?? '';
+    final rawStartTime = _meeting!['startTime'] ?? '';
+    final rawEndTime = _meeting!['endTime'] ?? '';
+    final startTime = rawStartTime.length >= 5
+        ? rawStartTime.substring(0, 5)
+        : rawStartTime;
+    final endTime = rawEndTime.length >= 5
+        ? rawEndTime.substring(0, 5)
+        : rawEndTime;
     final location = _meeting!['location'] ?? '';
     final status = _meeting!['status'] ?? 'DRAFT';
 
@@ -685,7 +695,7 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
           if (isMe)
             TextButton(
               onPressed: () => _cancelSignUp(slot),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              style: TextButton.styleFrom(foregroundColor: AppTheme.lightWood),
               child: const Text('Cancel'),
             )
           else if (!slot.isAssigned)

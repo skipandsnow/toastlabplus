@@ -90,29 +90,93 @@ class _MeetingSettingsScreenState extends State<MeetingSettingsScreen> {
     }
   }
 
+  Future<void> _editSchedule(MeetingSchedule schedule) async {
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) =>
+          _ScheduleFormSheet(clubId: widget.clubId, schedule: schedule),
+    );
+
+    if (result == true) {
+      _loadSchedules();
+    }
+  }
+
   Future<void> _generateMeetings(MeetingSchedule schedule) async {
+    int selectedMonths = schedule.autoGenerateMonths;
+
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Generate Meetings'),
-        content: Text(
-          'Generate meetings for the next ${schedule.autoGenerateMonths} months based on this schedule?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.sageGreen,
-              foregroundColor: Colors.white,
+          title: const Text('Generate Meetings'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Generate meetings based on this schedule'),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Text('Months: '),
+                  const SizedBox(width: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.remove, size: 18),
+                          onPressed: selectedMonths > 1
+                              ? () => setDialogState(() => selectedMonths--)
+                              : null,
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            '$selectedMonths',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add, size: 18),
+                          onPressed: selectedMonths < 12
+                              ? () => setDialogState(() => selectedMonths++)
+                              : null,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
             ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Generate'),
-          ),
-        ],
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.sageGreen,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Generate'),
+            ),
+          ],
+        ),
       ),
     );
 
@@ -124,7 +188,7 @@ class _MeetingSettingsScreenState extends State<MeetingSettingsScreen> {
     try {
       final response = await http.post(
         Uri.parse(
-          '${ApiConfig.mcpServerBaseUrl}/api/clubs/${widget.clubId}/meeting-schedules/${schedule.id}/generate',
+          '${ApiConfig.mcpServerBaseUrl}/api/clubs/${widget.clubId}/meeting-schedules/${schedule.id}/generate?months=$selectedMonths',
         ),
         headers: authService.authHeaders,
       );
@@ -392,7 +456,7 @@ class _MeetingSettingsScreenState extends State<MeetingSettingsScreen> {
             children: [
               _buildInfoChip(
                 Icons.access_time,
-                '${schedule.startTime} - ${schedule.endTime}',
+                '${schedule.startTime.substring(0, 5)} - ${schedule.endTime.substring(0, 5)}',
               ),
               const SizedBox(width: 8),
               _buildInfoChip(
@@ -405,6 +469,11 @@ class _MeetingSettingsScreenState extends State<MeetingSettingsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
+              TextButton.icon(
+                onPressed: () => _editSchedule(schedule),
+                icon: const Icon(Icons.edit_outlined, size: 18),
+                label: const Text('Edit'),
+              ),
               TextButton.icon(
                 onPressed: () => _generateMeetings(schedule),
                 icon: const Icon(Icons.auto_fix_high, size: 18),
@@ -440,8 +509,11 @@ class _MeetingSettingsScreenState extends State<MeetingSettingsScreen> {
 
 class _ScheduleFormSheet extends StatefulWidget {
   final int clubId;
+  final MeetingSchedule? schedule;
 
-  const _ScheduleFormSheet({required this.clubId});
+  const _ScheduleFormSheet({required this.clubId, this.schedule});
+
+  bool get isEditing => schedule != null;
 
   @override
   State<_ScheduleFormSheet> createState() => _ScheduleFormSheetState();
@@ -453,7 +525,7 @@ class _ScheduleFormSheetState extends State<_ScheduleFormSheet> {
   final _nameFocusNode = FocusNode();
   final String _frequency = 'MONTHLY';
   int _dayOfWeek = 3; // Wednesday
-  final List<int> _weekOfMonth = [1, 3]; // 1st and 3rd
+  List<int> _weekOfMonth = [1, 3]; // 1st and 3rd
   TimeOfDay _startTime = const TimeOfDay(hour: 19, minute: 0);
   TimeOfDay _endTime = const TimeOfDay(hour: 21, minute: 0);
   int _speakerCount = 3;
@@ -462,6 +534,33 @@ class _ScheduleFormSheetState extends State<_ScheduleFormSheet> {
   @override
   void initState() {
     super.initState();
+
+    // Populate form with existing schedule data if editing
+    if (widget.schedule != null) {
+      final s = widget.schedule!;
+      _nameController.text = s.name ?? '';
+      _locationController.text = s.defaultLocation ?? '';
+      _dayOfWeek = s.dayOfWeek ?? 3;
+      _weekOfMonth = s.weekOfMonth?.toList() ?? [1, 3];
+      _speakerCount = s.defaultSpeakerCount;
+
+      // Parse time strings (format: "HH:mm:ss" or "HH:mm")
+      final startParts = s.startTime.split(':');
+      if (startParts.length >= 2) {
+        _startTime = TimeOfDay(
+          hour: int.tryParse(startParts[0]) ?? 19,
+          minute: int.tryParse(startParts[1]) ?? 0,
+        );
+      }
+      final endParts = s.endTime.split(':');
+      if (endParts.length >= 2) {
+        _endTime = TimeOfDay(
+          hour: int.tryParse(endParts[0]) ?? 21,
+          minute: int.tryParse(endParts[1]) ?? 0,
+        );
+      }
+    }
+
     // When losing focus, fill with default value if empty
     _nameFocusNode.addListener(() {
       if (!_nameFocusNode.hasFocus && _nameController.text.isEmpty) {
@@ -506,23 +605,45 @@ class _ScheduleFormSheetState extends State<_ScheduleFormSheet> {
         'autoGenerateMonths': 3,
       });
 
-      final response = await http.post(
-        Uri.parse(
+      final Uri uri;
+      final http.Response response;
+
+      if (widget.isEditing) {
+        // Update existing schedule
+        uri = Uri.parse(
+          '${ApiConfig.mcpServerBaseUrl}/api/clubs/${widget.clubId}/meeting-schedules/${widget.schedule!.id}',
+        );
+        response = await http.put(
+          uri,
+          headers: {
+            ...authService.authHeaders,
+            'Content-Type': 'application/json',
+          },
+          body: body,
+        );
+      } else {
+        // Create new schedule
+        uri = Uri.parse(
           '${ApiConfig.mcpServerBaseUrl}/api/clubs/${widget.clubId}/meeting-schedules',
-        ),
-        headers: {
-          ...authService.authHeaders,
-          'Content-Type': 'application/json',
-        },
-        body: body,
-      );
+        );
+        response = await http.post(
+          uri,
+          headers: {
+            ...authService.authHeaders,
+            'Content-Type': 'application/json',
+          },
+          body: body,
+        );
+      }
 
       if (response.statusCode == 200 && mounted) {
         Navigator.pop(context, true);
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to create schedule'),
+          SnackBar(
+            content: Text(
+              'Failed to ${widget.isEditing ? 'update' : 'create'} schedule',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -563,7 +684,7 @@ class _ScheduleFormSheetState extends State<_ScheduleFormSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'New Schedule',
+                  widget.isEditing ? 'Edit Schedule' : 'New Schedule',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -770,9 +891,11 @@ class _ScheduleFormSheetState extends State<_ScheduleFormSheet> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text(
-                        'Create Schedule',
-                        style: TextStyle(
+                    : Text(
+                        widget.isEditing
+                            ? 'Update Schedule'
+                            : 'Create Schedule',
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
