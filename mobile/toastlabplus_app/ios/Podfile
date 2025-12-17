@@ -1,0 +1,31 @@
+# Uncomment this line to define a global platform for your project
+platform :ios, '18.0'
+
+# CocoaPods analytics disables sending stats about your project to CocoaPods.
+#
+# If you make use of this project, consider enabling it for CocoaPods to track
+# usage adoption.
+#
+# install! 'cocoapods', :disable_input_output_paths => true
+
+target 'Runner' do
+  use_frameworks!
+  use_modular_headers!
+
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  
+  target 'RunnerTests' do
+    inherit! :search_paths
+  end
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+    
+    # Ensure all pods use iOS 18.0 minimum to match the project
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '18.0'
+    end
+  end
+end
