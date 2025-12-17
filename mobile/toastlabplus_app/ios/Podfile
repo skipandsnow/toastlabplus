@@ -1,5 +1,4 @@
-# Standard Flutter Podfile setup
-require_relative 'Flutter/generated_xcode_build_settings.rb'
+
 use_frameworks!
 
 # Flutter Pod Helper
