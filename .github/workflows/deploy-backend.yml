@@ -55,10 +55,12 @@ jobs:
 
     steps:
       - name: Authenticate to Google Cloud
+        id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ env.SERVICE_ACCOUNT }}
+          token_format: access_token
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -93,7 +95,8 @@ jobs:
 
       - name: Configure Docker for Artifact Registry
         if: steps.check-image.outputs.exists == 'false'
-        run: gcloud auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev
+        run: |
+          echo '${{ steps.auth.outputs.access_token }}' | docker login -u oauth2accesstoken --password-stdin https://${{ env.GAR_LOCATION }}-docker.pkg.dev
 
       - name: Build and Push Docker Image
         if: steps.check-image.outputs.exists == 'false'
@@ -118,10 +121,12 @@ jobs:
 
     steps:
       - name: Authenticate to Google Cloud
+        id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ env.SERVICE_ACCOUNT }}
+          token_format: access_token
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -143,7 +148,8 @@ jobs:
 
       - name: Configure Docker for Artifact Registry
         if: steps.check-image.outputs.exists == 'false'
-        run: gcloud auth configure-docker ${{ env.GAR_LOCATION }}-docker.pkg.dev
+        run: |
+          echo '${{ steps.auth.outputs.access_token }}' | docker login -u oauth2accesstoken --password-stdin https://${{ env.GAR_LOCATION }}-docker.pkg.dev
 
       - name: Build and Push Docker Image
         if: steps.check-image.outputs.exists == 'false'
