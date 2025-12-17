@@ -55,6 +55,10 @@ jobs:
         working-directory: ./mobile/toastlabplus_app
         run: flutter pub get
 
+      - name: Generate iOS config files
+        working-directory: ./mobile/toastlabplus_app
+        run: flutter assemble -dTargetPlatform=ios -dBuildMode=release ios_framework_bundle_flutter_assets
+
       - name: Setup App Store Connect API Key
         env:
           APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
