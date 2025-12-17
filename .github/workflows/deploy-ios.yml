@@ -51,9 +51,11 @@ jobs:
           channel: "stable"
           cache: true
 
-      - name: Get Flutter dependencies
+      - name: Clean and Get Flutter dependencies
         working-directory: ./mobile/toastlabplus_app
-        run: flutter pub get
+        run: |
+          flutter clean
+          flutter pub get
 
       - name: Setup App Store Connect API Key
         env:
