@@ -55,10 +55,6 @@ jobs:
         working-directory: ./mobile/toastlabplus_app
         run: flutter pub get
 
-      - name: Install CocoaPods dependencies
-        working-directory: ./mobile/toastlabplus_app/ios
-        run: pod install --repo-update
-
       - name: Setup App Store Connect API Key
         env:
           APP_STORE_CONNECT_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
