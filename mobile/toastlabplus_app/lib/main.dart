@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'config/api_config.dart';
 import 'screens/home_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/profile_screen.dart';
@@ -10,6 +11,10 @@ import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  debugPrint('🚀 App Starting - ToastLabPlus (Prod Debug)');
+  debugPrint('📍 MCP Server URL: ${ApiConfig.mcpServerBaseUrl}');
+  debugPrint('📍 Chat Backend URL: ${ApiConfig.chatBackendBaseUrl}');
 
   final authService = AuthService();
   await authService.init();
