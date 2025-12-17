@@ -258,6 +258,79 @@ flowchart LR
 5. Merge `develop` -> `main` 觸發 Production 部署。
 6. `git tag v1.2.0` 並 Push tag。
 
+## 10.9 iOS App Store 部署 (v2.1+)
+
+### 10.9.1 部署架構
+
+iOS App 透過 GitHub Actions 自動化部署到 App Store Connect。
+
+```mermaid
+flowchart LR
+    subgraph GitHub ["GitHub Actions"]
+        Trigger["Manual Trigger"]
+        Build["Flutter Build iOS"]
+        Archive["Xcode Archive"]
+        Upload["Upload to App Store"]
+    end
+    
+    subgraph Apple ["Apple Services"]
+        ASC["App Store Connect"]
+        TF["TestFlight"]
+        AS["App Store"]
+    end
+    
+    Trigger --> Build --> Archive --> Upload
+    Upload --> ASC --> TF --> AS
+```
+
+### 10.9.2 必要設定
+
+| 項目 | 設定值 | 位置 |
+|------|--------|------|
+| **Bundle ID** | `com.skipandsnow.toastlabplus` | Xcode Project |
+| **Development Team** | `B9JM73WKLK` | project.pbxproj |
+| **iOS Deployment Target** | `18.0` | Podfile, project.pbxproj |
+| **Code Sign Identity** | `Apple Distribution` | project.pbxproj |
+
+### 10.9.3 GitHub Secrets 設定
+
+需要在 Repository Settings → Secrets → Actions 設定以下 Secrets：
+
+| Secret 名稱 | 說明 | 取得方式 |
+|-------------|------|----------|
+| `APP_STORE_CONNECT_KEY_ID` | API Key ID (10 字元) | App Store Connect → Users → Keys |
+| `APP_STORE_CONNECT_ISSUER_ID` | Issuer ID (UUID) | 同上 |
+| `APP_STORE_CONNECT_PRIVATE_KEY` | .p8 檔案內容 | 下載後複製全部內容 |
+
+### 10.9.4 Workflow 觸發
+
+```bash
+# 手動觸發 (GitHub Actions UI)
+GitHub → Actions → Deploy iOS to App Store → Run workflow
+
+# 參數:
+# - deployment_target: testflight / app_store
+# - version: (選填) 覆蓋 pubspec.yaml 版本
+# - build_number: (選填) 覆蓋自動生成的 build number
+```
+
+### 10.9.5 相關檔案
+
+| 檔案 | 說明 |
+|------|------|
+| `.github/workflows/deploy-ios.yml` | iOS 部署 Workflow |
+| `ios/ExportOptions.plist` | IPA 匯出設定 (app-store-connect) |
+| `ios/Podfile` | CocoaPods 設定 (iOS 18.0+) |
+| `web/privacy.html` | 隱私政策頁面 (App Store 必填) |
+| `web/support.html` | 支援頁面 (App Store 必填) |
+
+### 10.9.6 App Store Connect 頁面 URL
+
+| 頁面 | URL |
+|------|-----|
+| **隱私政策** | `https://toastlabplus.web.app/privacy.html` |
+| **支援頁面** | `https://toastlabplus.web.app/support.html` |
+
 ---
 
 [下一章：功能雛型畫面 →](./11-ui-mockups.md)

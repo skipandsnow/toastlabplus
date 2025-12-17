@@ -132,6 +132,7 @@ toastlabplus/
 
 | 版本 | 日期 | 變更說明 |
 |------|------|----------|
+| **v2.3** (Release) | 2025-12-18 | **iOS App Store 部署**：GitHub Actions 自動化部署到 App Store Connect、App Store Connect API 整合、隱私政策/支援頁面、Web favicon 更新 |
 | **v2.2** (Release) | 2025-12-18 | **會議管理功能增強**：Meeting Schedule 編輯功能、Generate Meetings 月數動態選擇 (1-12)、Agenda 動態 Speaker 行自動取消隱藏、時間格式統一 (HH:mm)、UI 文字英文化 |
 | **v2.1** (Release) | 2025-12-17 | **正式發布 Cloud Run 雙環境部署**：Staging/Production 資料庫隔離、CORS 修正、前端轉場優化 (IndexedStack)、成本管理腳本。 |
 | **v2.0** | 2025-12-16 | **會議管理與 Agenda 產生功能完成**：Meeting Schedule 自動產生會議、角色報名、AI 模板解析、Agenda Excel 產生、刪除會議、Template-Based Role Slots |
