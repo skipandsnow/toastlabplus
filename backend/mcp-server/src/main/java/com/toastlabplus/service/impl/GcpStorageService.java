@@ -19,7 +19,7 @@ import java.util.UUID;
  * Only activated when gcp.storage.enabled=true
  */
 @Service
-@ConditionalOnProperty(name = "gcp.storage.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "gcp.storage.enabled", havingValue = "true", matchIfMissing = true)
 public class GcpStorageService implements StorageService {
 
     private static final Logger log = LoggerFactory.getLogger(GcpStorageService.class);
