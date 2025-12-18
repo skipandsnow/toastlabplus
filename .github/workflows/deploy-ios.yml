@@ -121,9 +121,11 @@ jobs:
 
       - name: Upload to App Store Connect
         run: |
+          IPA_PATH=$(find $RUNNER_TEMP/ipa -name "*.ipa" -type f | head -1)
+          echo "Uploading IPA: $IPA_PATH"
           xcrun altool --upload-app \
             --type ios \
-            --file $RUNNER_TEMP/ipa/*.ipa \
+            --file "$IPA_PATH" \
             --apiKey ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
             --apiIssuer ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
 
