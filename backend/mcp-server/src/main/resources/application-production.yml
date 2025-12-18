@@ -26,10 +26,10 @@ spring:
       credentials:
         encoded-key: # 留空，使用 Cloud Run default service account
 
-# Cloud Run 上禁用 GCP Storage (暫時)
+# Cloud Run 上啟用 GCP Storage (頭像上傳)
 gcp:
   storage:
-    enabled: false
+    enabled: true
 
 logging:
   level:

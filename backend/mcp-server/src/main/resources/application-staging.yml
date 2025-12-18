@@ -27,10 +27,10 @@ spring:
       credentials:
         location: # 留空會使用 ADC
 
-# Cloud Run 上禁用 GCP Storage (暫時)
+# Cloud Run 上啟用 GCP Storage (頭像上傳)
 gcp:
   storage:
-    enabled: false
+    enabled: true
 
 logging:
   level:
