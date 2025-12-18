@@ -63,9 +63,6 @@ pubspec.lock
 **/linux/flutter/generated_plugin_registrant.h
 **/linux/flutter/generated_plugins.cmake
 
-# Web
-**/web/favicon.png
-**/web/icons/
 
 # Exceptions
 !**/ios/**/default.mode1v3
