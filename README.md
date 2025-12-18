@@ -132,20 +132,20 @@ toastlabplus/
 
 | 版本 | 日期 | 變更說明 |
 |------|------|----------|
-| **v2.3** (Release) | 2025-12-18 | **iOS App Store 部署**：GitHub Actions 自動化部署到 App Store Connect、App Store Connect API 整合、隱私政策/支援頁面、Web favicon 更新 |
-| **v2.2** (Release) | 2025-12-18 | **會議管理功能增強**：Meeting Schedule 編輯功能、Generate Meetings 月數動態選擇 (1-12)、Agenda 動態 Speaker 行自動取消隱藏、時間格式統一 (HH:mm)、UI 文字英文化 |
-| **v2.1** (Release) | 2025-12-17 | **正式發布 Cloud Run 雙環境部署**：Staging/Production 資料庫隔離、CORS 修正、前端轉場優化 (IndexedStack)、成本管理腳本。 |
-| **v2.0** | 2025-12-16 | **會議管理與 Agenda 產生功能完成**：Meeting Schedule 自動產生會議、角色報名、AI 模板解析、Agenda Excel 產生、刪除會議、Template-Based Role Slots |
-| **v1.9** | 2025-12-14 | Club Info 擴充（聯絡人、時間）、首頁社團搜尋功能、UI 優化、安全性修復 |
-| **v1.8** | 2025-12-13 | 多分會管理架構（一位使用者可同時管理多個分會）|
-| **v1.7** | 2025-12-10 | 功能細節完善與 UI 更新（FCM 通知、Gemini 3 Pro、宮崎駿風格 UI）|
-| **v1.6** | 2025-12-10 | 文件拆分為多章節 |
-| **v1.5** | 2025-12-09 | 改用 Gemini Developer API |
-| **v1.4** | 2025-12-09 | 遷移至 Google Cloud Platform |
-| **v1.3** | 2025-12-06 | 新增基礎設施與部署策略（Azure 版本）|
-| **v1.2** | 2025-12-06 | 新增會議投票機制 |
-| **v1.1** | 2025-12-06 | 新增細部流程設計 |
-| **v1.0** | 2025-12-06 | 初版完成，包含完整系統架構與功能設計 |
+| **v0.1.4** (Release) | 2025-12-19 | **Club Admin 管理與 UI 優化**：新增版本資訊與 Release Notes 頁面、登入頁面顯示版本與版權、修正未正確顯示當前 Club Admin、修正 Club 更新後 UI 未刷新問題、修正 Snackbar 重複顯示、修正 Remove Club Admin API 錯誤、Web metadata 更新 |
+| **v0.1.3** (Release) | 2025-12-18 | **iOS App Store 部署**：GitHub Actions 自動化部署到 App Store Connect、App Store Connect API 整合、隱私政策/支援頁面、Web favicon 更新 |
+| **v0.1.2** (Release) | 2025-12-18 | **會議管理功能增強**：Meeting Schedule 編輯功能、Generate Meetings 月數動態選擇 (1-12)、Agenda 動態 Speaker 行自動取消隱藏、時間格式統一 (HH:mm)、UI 文字英文化 |
+| **v0.1.1** (Release) | 2025-12-17 | **正式發布 Cloud Run 雙環境部署**：Staging/Production 資料庫隔離、CORS 修正、前端轉場優化 (IndexedStack)、成本管理腳本。 |
+| **v0.1.0** | 2025-12-16 | **會議管理與 Agenda 產生功能完成**：Meeting Schedule 自動產生會議、角色報名、AI 模板解析、Agenda Excel 產生、刪除會議、Template-Based Role Slots |
+| **v0.0.9** | 2025-12-14 | Club Info 擴充（聯絡人、時間）、首頁社團搜尋功能、UI 優化、安全性修復 |
+| **v0.0.8** | 2025-12-13 | 多分會管理架構（一位使用者可同時管理多個分會）|
+| **v0.0.7** | 2025-12-10 | 功能細節完善與 UI 更新（FCM 通知、Gemini 3 Pro、宮崎駿風格 UI）|
+| **v0.0.6** | 2025-12-10 | 文件拆分為多章節 |
+| **v0.0.5** | 2025-12-09 | 改用 Gemini Developer API |
+| **v0.0.4** | 2025-12-09 | 遷移至 Google Cloud Platform |
+| **v0.0.3** | 2025-12-06 | 新增基礎設施與部署策略（Azure 版本）|
+| **v0.0.2** | 2025-12-06 | 新增會議投票機制、細部流程設計 |
+| **v0.0.1** | 2025-12-06 | 初版完成，包含完整系統架構與功能設計 |
 
 ---
 
@@ -154,13 +154,13 @@ toastlabplus/
 ### Flutter App
 ```bash
 cd mobile/toastlabplus_app
-flutter run -d chrome
+flutter run -d chrome --web-port 3000
 ```
 
 ### MCP Server (Spring Boot)
 ```bash
 cd backend/mcp-server
-./mvnw spring-boot:run
+mvn spring-boot:run
 ```
 
 ### Chat Backend (Python)

@@ -35,6 +35,7 @@ class ClubDetailManagementScreen extends StatefulWidget {
 class _ClubDetailManagementScreenState
     extends State<ClubDetailManagementScreen> {
   late String _clubName;
+  bool _hasChanges = false;
 
   @override
   void initState() {
@@ -189,11 +190,18 @@ class _ClubDetailManagementScreenState
       body: SafeArea(
         child: Column(
           children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: UserHeader(showBackButton: true),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+              child: UserHeader(
+                showBackButton: true,
+                onBack: () {
+                  debugPrint(
+                    'ClubDetailManagementScreen: onBack called, _hasChanges=$_hasChanges',
+                  );
+                  Navigator.of(context).pop(_hasChanges);
+                },
+              ),
             ),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
@@ -233,7 +241,6 @@ class _ClubDetailManagementScreenState
               ),
             ),
             const SizedBox(height: 24),
-
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -267,6 +274,7 @@ class _ClubDetailManagementScreenState
                       if (newClubName != null && context.mounted) {
                         setState(() {
                           _clubName = newClubName;
+                          _hasChanges = true;
                         });
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Club info updated!')),
@@ -363,7 +371,6 @@ class _ClubDetailManagementScreenState
                       );
                     },
                   ),
-
                   // Delete Club (Platform Admin only)
                   if (isPlatformAdmin) ...[
                     const SizedBox(height: 32),

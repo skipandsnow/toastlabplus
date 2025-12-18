@@ -147,9 +147,6 @@ class _EditClubInfoScreenState extends State<EditClubInfoScreen> {
       if (!mounted) return;
 
       if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Club info updated successfully!')),
-        );
         Navigator.pop(
           context,
           _nameController.text.trim(),

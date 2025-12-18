@@ -24,6 +24,7 @@ class MemberSelectionScreen extends StatefulWidget {
 
 class _MemberSelectionScreenState extends State<MemberSelectionScreen> {
   List<dynamic> _members = [];
+  Set<int> _currentAdminIds = {}; // Track current admins for this club
   bool _isLoading = false;
   String? _error;
 
@@ -41,22 +42,42 @@ class _MemberSelectionScreenState extends State<MemberSelectionScreen> {
 
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
-      final response = await http.get(
+
+      // Fetch members and current admins in parallel
+      final membersResponse = await http.get(
         Uri.parse('${ApiConfig.mcpServerBaseUrl}/api/members'),
         headers: authService.authHeaders,
       );
 
-      if (response.statusCode == 200) {
+      final adminsResponse = await http.get(
+        Uri.parse(
+          '${ApiConfig.mcpServerBaseUrl}/api/clubs/${widget.clubId}/admins',
+        ),
+        headers: authService.authHeaders,
+      );
+
+      if (membersResponse.statusCode == 200) {
         if (mounted) {
+          final allMembers = json.decode(membersResponse.body) as List<dynamic>;
+
+          // Parse current admin IDs from admins response
+          Set<int> adminIds = {};
+          if (adminsResponse.statusCode == 200) {
+            final admins = json.decode(adminsResponse.body) as List<dynamic>;
+            adminIds = admins.map((a) => a['memberId'] as int).toSet();
+          }
+
           setState(() {
-            final allMembers = json.decode(response.body) as List<dynamic>;
             _members = allMembers
                 .where((m) => m['role'] != 'PLATFORM_ADMIN')
                 .toList();
+            _currentAdminIds = adminIds;
           });
         }
       } else {
-        throw Exception('Failed to load members: ${response.statusCode}');
+        throw Exception(
+          'Failed to load members: ${membersResponse.statusCode}',
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -177,15 +198,16 @@ class _MemberSelectionScreenState extends State<MemberSelectionScreen> {
                     const SizedBox(height: 16),
                 itemBuilder: (context, index) {
                   final member = _members[index];
+                  final memberId = (member['id'] as int?) ?? 0;
                   final name = member['name'] ?? 'Unknown';
                   final email = member['email'] ?? '';
                   // Handle dynamic role types safely
                   final role = member['role']?.toString() ?? 'MEMBER';
                   final clubName = member['clubName']?.toString() ?? 'No Club';
-                  final memberClubId = member['clubId'] as int?;
 
+                  // Check if this member is current admin via the fetched admin list
                   final isCurrentAdmin =
-                      role == 'CLUB_ADMIN' && memberClubId == widget.clubId;
+                      memberId > 0 && _currentAdminIds.contains(memberId);
 
                   return HandDrawnContainer(
                     color: isCurrentAdmin
@@ -316,7 +338,11 @@ class _MemberSelectionScreenState extends State<MemberSelectionScreen> {
         Uri.parse(
           '${ApiConfig.mcpServerBaseUrl}/api/members/$memberId/remove-club-admin',
         ),
-        headers: authService.authHeaders,
+        headers: {
+          ...authService.authHeaders,
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'clubId': widget.clubId}),
       );
 
       if (mounted) {

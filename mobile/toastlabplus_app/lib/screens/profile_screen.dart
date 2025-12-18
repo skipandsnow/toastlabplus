@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../config/app_version.dart';
 import '../theme/app_theme.dart';
 import '../widgets/hand_drawn_widgets.dart';
 import '../services/auth_service.dart';
@@ -156,6 +157,12 @@ class ProfileScreen extends StatelessWidget {
                 Icons.help_outline_rounded,
                 'Help & Support',
                 () {},
+              ),
+              const SizedBox(height: 16),
+              _buildMenuOption(
+                Icons.info_outline_rounded,
+                'About & Release Notes',
+                () => _showAboutDialog(context),
               ),
               const SizedBox(height: 32),
 
@@ -358,6 +365,148 @@ class ProfileScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showAboutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.info_outline, color: AppTheme.sageGreen),
+            const SizedBox(width: 8),
+            const Text('About ToastLab+'),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Version Info
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.sageGreen.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.new_releases_outlined,
+                      color: AppTheme.sageGreen,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      AppVersion.displayFull,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.darkWood,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Release Notes Title
+              Text(
+                'Release Notes',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.darkWood,
+                ),
+              ),
+              const Divider(),
+
+              // v0.1.4
+              _buildReleaseNote('v0.1.4', '2025-12-19', [
+                '✨ 新增版本資訊與 Release Notes 頁面',
+                '✨ 登入頁面顯示版本與版權',
+                '🐛 修正未正確顯示當前 Club Admin',
+                '🐛 修正 Club 更新後 UI 未刷新問題',
+                '🐛 修正 Snackbar 重複顯示問題',
+                '🐛 修正 Remove Club Admin API 錯誤',
+              ]),
+
+              // v0.1.3
+              _buildReleaseNote('v0.1.3', '2025-12-18', [
+                '✨ iOS App Store 部署',
+                '✨ GitHub Actions 自動化部署',
+                '✨ Web favicon 更新',
+              ]),
+
+              // v0.1.2
+              _buildReleaseNote('v0.1.2', '2025-12-18', [
+                '✨ Meeting Schedule 編輯功能',
+                '✨ Agenda 動態 Speaker 行優化',
+                '✨ 時間格式統一與 UI 翻譯',
+              ]),
+
+              // v0.1.1
+              _buildReleaseNote('v0.1.1', '2025-12-17', [
+                '🚀 Cloud Run 雙環境部署',
+                '✨ Staging/Production 資料庫隔離',
+                '✨ 前端轉場效能優化',
+              ]),
+
+              // v0.1.0
+              _buildReleaseNote('v0.1.0', '2025-12-16', [
+                '🎉 會議管理與 Agenda 產生功能',
+                '✨ AI 模板解析與角色報名',
+                '✨ 全新 UI 風格設計',
+              ]),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReleaseNote(String version, String date, List<String> changes) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                version,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.dustyBlue,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                date,
+                style: TextStyle(fontSize: 12, color: AppTheme.lightWood),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          ...changes.map(
+            (change) => Padding(
+              padding: const EdgeInsets.only(left: 8, top: 2),
+              child: Text(
+                change,
+                style: TextStyle(fontSize: 13, color: AppTheme.darkWood),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

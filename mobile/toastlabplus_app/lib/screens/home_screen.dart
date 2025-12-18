@@ -751,6 +751,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                     )
                                     .then((result) {
                                       // Refresh clubs list after returning (e.g., after delete)
+                                      debugPrint(
+                                        'HomeScreen: ClubDetailManagement returned result=$result',
+                                      );
                                       if (result == true) _loadClubs();
                                     });
                               },
@@ -859,14 +862,22 @@ class _HomeScreenState extends State<HomeScreen> {
                               borderColor: AppTheme.dustyBlue,
                               borderRadius: 20,
                               onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => ClubDetailManagementScreen(
-                                      clubId: club['id'] as int,
-                                      clubName: club['name'] ?? 'Club',
-                                    ),
-                                  ),
-                                );
+                                Navigator.of(context)
+                                    .push(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            ClubDetailManagementScreen(
+                                              clubId: club['id'] as int,
+                                              clubName: club['name'] ?? 'Club',
+                                            ),
+                                      ),
+                                    )
+                                    .then((result) {
+                                      debugPrint(
+                                        'HomeScreen (Club Admin): ClubDetailManagement returned result=$result',
+                                      );
+                                      if (result == true) _loadClubs();
+                                    });
                               },
                               child: Padding(
                                 padding: const EdgeInsets.all(16.0),

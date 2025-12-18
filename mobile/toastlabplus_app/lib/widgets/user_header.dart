@@ -8,11 +8,13 @@ import '../theme/app_theme.dart';
 class UserHeader extends StatelessWidget {
   final bool showBackButton;
   final VoidCallback? onMembershipChanged;
+  final VoidCallback? onBack;
 
   const UserHeader({
     super.key,
     this.showBackButton = false,
     this.onMembershipChanged,
+    this.onBack,
   });
 
   @override
@@ -26,7 +28,7 @@ class UserHeader extends StatelessWidget {
         if (showBackButton) ...[
           IconButton(
             icon: Icon(Icons.arrow_back, color: AppTheme.darkWood),
-            onPressed: () => Navigator.pop(context),
+            onPressed: onBack ?? () => Navigator.pop(context),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
             iconSize: 24,
