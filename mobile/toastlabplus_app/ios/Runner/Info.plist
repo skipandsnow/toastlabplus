@@ -51,5 +51,7 @@
 	<string>ToastLab+ needs camera access to take photos for chat and user profiles.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>ToastLab+ needs microphone access for audio recording features.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
