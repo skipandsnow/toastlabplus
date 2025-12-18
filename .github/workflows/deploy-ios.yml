@@ -107,7 +107,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             archive
 
-      - name: Export IPA
+      - name: Export and Upload to App Store Connect
         working-directory: ./mobile/toastlabplus_app/ios
         run: |
           xcodebuild -exportArchive \
@@ -118,23 +118,6 @@ jobs:
             -authenticationKeyPath ~/private_keys/AuthKey_${{ secrets.APP_STORE_CONNECT_KEY_ID }}.p8 \
             -authenticationKeyID ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
             -authenticationKeyIssuerID ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-
-      - name: Upload to App Store Connect
-        run: |
-          IPA_PATH=$(find $RUNNER_TEMP/ipa -name "*.ipa" -type f | head -1)
-          echo "Uploading IPA: $IPA_PATH"
-          xcrun altool --upload-app \
-            --type ios \
-            --file "$IPA_PATH" \
-            --apiKey ${{ secrets.APP_STORE_CONNECT_KEY_ID }} \
-            --apiIssuer ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-
-      - name: Upload IPA artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-ipa-${{ steps.version.outputs.VERSION }}-${{ steps.version.outputs.BUILD_NUMBER }}
-          path: ${{ runner.temp }}/ipa/*.ipa
-          retention-days: 30
 
       - name: Summary
         run: |
