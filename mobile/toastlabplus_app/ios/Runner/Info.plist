@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ToastLab+ needs access to your photo library to select and share images in chat and user profiles.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>ToastLab+ needs camera access to take photos for chat and user profiles.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>ToastLab+ needs microphone access for audio recording features.</string>
 </dict>
 </plist>
