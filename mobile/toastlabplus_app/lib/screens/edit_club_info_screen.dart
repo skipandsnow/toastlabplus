@@ -150,7 +150,10 @@ class _EditClubInfoScreenState extends State<EditClubInfoScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Club info updated successfully!')),
         );
-        // Navigator.pop(context, true); // Keep on page as requested
+        Navigator.pop(
+          context,
+          _nameController.text.trim(),
+        ); // Return new club name
       } else {
         setState(() => _error = 'Failed to update: ${response.statusCode}');
       }

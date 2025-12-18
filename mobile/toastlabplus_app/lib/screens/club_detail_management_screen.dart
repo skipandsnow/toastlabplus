@@ -17,7 +17,7 @@ import 'officer_management_screen.dart';
 import 'meeting_settings_screen.dart';
 import 'template_management_screen.dart';
 
-class ClubDetailManagementScreen extends StatelessWidget {
+class ClubDetailManagementScreen extends StatefulWidget {
   final int clubId;
   final String clubName;
 
@@ -27,13 +27,28 @@ class ClubDetailManagementScreen extends StatelessWidget {
     required this.clubName,
   });
 
+  @override
+  State<ClubDetailManagementScreen> createState() =>
+      _ClubDetailManagementScreenState();
+}
+
+class _ClubDetailManagementScreenState
+    extends State<ClubDetailManagementScreen> {
+  late String _clubName;
+
+  @override
+  void initState() {
+    super.initState();
+    _clubName = widget.clubName;
+  }
+
   Future<void> _assignClubAdmin(BuildContext context) async {
     // Navigate to selection screen which handles the assignment internally
     final success = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (_) =>
-            MemberSelectionScreen(clubId: clubId, clubName: clubName),
+            MemberSelectionScreen(clubId: widget.clubId, clubName: _clubName),
       ),
     );
 
@@ -77,7 +92,7 @@ class ClubDetailManagementScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              '"$clubName"',
+              '"$_clubName"',
               style: const TextStyle(fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
@@ -105,7 +120,7 @@ class ClubDetailManagementScreen extends StatelessWidget {
               foregroundColor: Colors.white,
             ),
             onPressed: () {
-              if (confirmController.text == clubName) {
+              if (confirmController.text == _clubName) {
                 Navigator.pop(ctx, true);
               } else {
                 ScaffoldMessenger.of(ctx).showSnackBar(
@@ -128,19 +143,19 @@ class ClubDetailManagementScreen extends StatelessWidget {
     try {
       final response = await http.delete(
         Uri.parse(
-          '${ApiConfig.mcpServerBaseUrl}${ApiConfig.clubsEndpoint}/$clubId',
+          '${ApiConfig.mcpServerBaseUrl}${ApiConfig.clubsEndpoint}/${widget.clubId}',
         ),
         headers: {
           ...authService.authHeaders,
           'Content-Type': 'application/json',
         },
-        body: json.encode({'confirmName': clubName}),
+        body: json.encode({'confirmName': _clubName}),
       );
 
       if (response.statusCode == 200) {
         scaffoldMessenger.showSnackBar(
           SnackBar(
-            content: Text('Club "$clubName" deleted successfully'),
+            content: Text('Club "$_clubName" deleted successfully'),
             backgroundColor: AppTheme.sageGreen,
           ),
         );
@@ -187,7 +202,7 @@ class ClubDetailManagementScreen extends StatelessWidget {
                   const SizedBox(width: 12),
                   Flexible(
                     child: Text(
-                      clubName,
+                      _clubName,
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
@@ -240,24 +255,22 @@ class ClubDetailManagementScreen extends StatelessWidget {
                     Icons.edit_note,
                     AppTheme.dustyBlue,
                     () async {
-                      final updated = await Navigator.push<bool>(
+                      final newClubName = await Navigator.push<String?>(
                         context,
                         MaterialPageRoute(
                           builder: (_) => EditClubInfoScreen(
-                            clubId: clubId,
-                            clubName: clubName,
+                            clubId: widget.clubId,
+                            clubName: _clubName,
                           ),
                         ),
                       );
-                      if (updated == true && context.mounted) {
+                      if (newClubName != null && context.mounted) {
+                        setState(() {
+                          _clubName = newClubName;
+                        });
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Club info updated. Please refresh list.',
-                            ),
-                          ),
+                          const SnackBar(content: Text('Club info updated!')),
                         );
-                        // Ideally we should tell HomeScreen to refresh or refresh local state if this was Stateful
                       }
                     },
                   ),
@@ -271,8 +284,8 @@ class ClubDetailManagementScreen extends StatelessWidget {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => AdminApprovalScreen(
-                            clubId: clubId,
-                            clubName: clubName,
+                            clubId: widget.clubId,
+                            clubName: _clubName,
                           ),
                         ),
                       );
@@ -289,8 +302,8 @@ class ClubDetailManagementScreen extends StatelessWidget {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => ClubMembersListScreen(
-                            clubId: clubId,
-                            clubName: clubName,
+                            clubId: widget.clubId,
+                            clubName: _clubName,
                           ),
                         ),
                       );
@@ -307,8 +320,8 @@ class ClubDetailManagementScreen extends StatelessWidget {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => OfficerManagementScreen(
-                            clubId: clubId,
-                            clubName: clubName,
+                            clubId: widget.clubId,
+                            clubName: _clubName,
                           ),
                         ),
                       );
@@ -325,8 +338,8 @@ class ClubDetailManagementScreen extends StatelessWidget {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => TemplateManagementScreen(
-                            clubId: clubId,
-                            clubName: clubName,
+                            clubId: widget.clubId,
+                            clubName: _clubName,
                           ),
                         ),
                       );
@@ -343,8 +356,8 @@ class ClubDetailManagementScreen extends StatelessWidget {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => MeetingSettingsScreen(
-                            clubId: clubId,
-                            clubName: clubName,
+                            clubId: widget.clubId,
+                            clubName: _clubName,
                           ),
                         ),
                       );
