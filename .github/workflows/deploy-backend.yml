@@ -80,18 +80,8 @@ jobs:
         if: steps.check-image.outputs.exists == 'false'
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        if: steps.check-image.outputs.exists == 'false'
-        uses: actions/setup-java@v4
-        with:
-          java-version: "17"
-          distribution: "temurin"
-          cache: maven
-
-      - name: Build with Maven
-        if: steps.check-image.outputs.exists == 'false'
-        working-directory: ./backend/mcp-server
-        run: mvn clean package -DskipTests -B
+      # Note: JDK setup and Maven build removed - Dockerfile handles compilation
+      # This allows using JDK 25 which isn't available in setup-java action yet
 
       - name: Configure Docker for Artifact Registry
         if: steps.check-image.outputs.exists == 'false'
