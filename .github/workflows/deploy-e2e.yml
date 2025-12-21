@@ -26,6 +26,11 @@ on:
                 default: true
                 type: boolean
 
+# Required for workflow_call to inherit permissions
+permissions:
+    contents: read
+    id-token: write
+
 jobs:
     # ============================================
     # Deploy MCP Server
