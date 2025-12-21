@@ -255,6 +255,68 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 24),
+
+                    // Divider with "or"
+                    Row(
+                      children: [
+                        Expanded(child: Divider(color: AppTheme.lightWood)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            'or',
+                            style: TextStyle(color: AppTheme.lightWood),
+                          ),
+                        ),
+                        Expanded(child: Divider(color: AppTheme.lightWood)),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Google Sign In Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: OutlinedButton.icon(
+                          onPressed: authService.isLoading
+                              ? null
+                              : () async {
+                                  final result = await authService
+                                      .signInWithGoogle();
+                                  if (!context.mounted) return;
+
+                                  if (result['success'] != true) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          result['error'] as String? ??
+                                              'Google sign in failed',
+                                        ),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                },
+                          icon: Image.network(
+                            'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                            height: 24,
+                            width: 24,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.g_mobiledata),
+                          ),
+                          label: const Text('Continue with Google'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppTheme.darkWood,
+                            side: BorderSide(color: AppTheme.lightWood),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 16),
 
                     // Register link

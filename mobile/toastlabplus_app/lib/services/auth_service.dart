@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:google_sign_in/google_sign_in.dart';
 import '../config/api_config.dart';
 
 class AuthService extends ChangeNotifier {
@@ -288,6 +290,82 @@ class AuthService extends ChangeNotifier {
 
     if (response.statusCode != 200) {
       throw Exception(data['error'] ?? 'Failed to change password');
+    }
+  }
+
+  /// Sign in with Google using Firebase Auth
+  Future<Map<String, dynamic>> signInWithGoogle() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      // 1. Trigger Google Sign In
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile'],
+      );
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
+      if (googleUser == null) {
+        return {'success': false, 'error': 'Google sign in cancelled'};
+      }
+
+      // 2. Get Google Auth credentials
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      // 3. Sign in to Firebase with Google credentials
+      final credential = firebase_auth.GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final firebase_auth.UserCredential userCredential = await firebase_auth
+          .FirebaseAuth
+          .instance
+          .signInWithCredential(credential);
+
+      final firebase_auth.User? firebaseUser = userCredential.user;
+
+      if (firebaseUser == null) {
+        return {'success': false, 'error': 'Firebase authentication failed'};
+      }
+
+      // 4. Call backend to create/update member and get JWT token
+      final response = await http
+          .post(
+            Uri.parse('${ApiConfig.mcpServerBaseUrl}/api/auth/firebase'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({
+              'firebaseUid': firebaseUser.uid,
+              'email': firebaseUser.email,
+              'name': firebaseUser.displayName ?? 'User',
+              'provider': 'GOOGLE',
+            }),
+          )
+          .timeout(ApiConfig.connectionTimeout);
+
+      final data = json.decode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode == 200) {
+        // Save token and member info
+        _token = data['token'] as String;
+        _member = data['member'] as Map<String, dynamic>;
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_tokenKey, _token!);
+        await prefs.setString(_memberKey, json.encode(_member));
+
+        notifyListeners();
+        return {'success': true, 'data': data};
+      } else {
+        return {'success': false, 'error': data['error'] ?? 'Login failed'};
+      }
+    } catch (e) {
+      debugPrint('Google Sign In Error: $e');
+      return {'success': false, 'error': e.toString()};
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 }

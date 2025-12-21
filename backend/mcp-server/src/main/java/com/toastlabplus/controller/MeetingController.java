@@ -179,6 +179,53 @@ public class MeetingController {
         return ResponseEntity.ok(Map.of("message", "Meeting deleted successfully"));
     }
 
+    /**
+     * Update a meeting (theme, title, location).
+     * Only Club Admin of the meeting's club or Platform Admin can update.
+     */
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyRole('CLUB_ADMIN', 'PLATFORM_ADMIN')")
+    public ResponseEntity<?> updateMeeting(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> updates,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        Member currentMember = memberRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
+
+        Meeting meeting = meetingRepository.findById(id).orElse(null);
+        if (meeting == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Check permission
+        Long clubId = meeting.getClub().getId();
+        if (!"PLATFORM_ADMIN".equals(currentMember.getRole())) {
+            if (!clubAdminRepository.existsByMemberIdAndClubId(currentMember.getId(), clubId)) {
+                return ResponseEntity.status(403)
+                        .body(Map.of("error", "You can only update meetings for clubs you manage"));
+            }
+        }
+
+        // Apply updates
+        if (updates.containsKey("theme")) {
+            meeting.setTheme(updates.get("theme"));
+        }
+        if (updates.containsKey("title")) {
+            meeting.setTitle(updates.get("title"));
+        }
+        if (updates.containsKey("location")) {
+            meeting.setLocation(updates.get("location"));
+        }
+
+        meeting.setUpdatedAt(LocalDateTime.now());
+        Meeting saved = meetingRepository.save(meeting);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Meeting updated successfully",
+                "meetingId", saved.getId(),
+                "theme", saved.getTheme() != null ? saved.getTheme() : ""));
+    }
+
     // ==================== Request DTOs ====================
 
     public record CreateMeetingRequest(

@@ -125,3 +125,99 @@ sequenceDiagram
 ---
 
 [下一章：角色權限設計 →](./03-permissions.md)
+
+---
+
+## 2.6 Google 登入 (v0.1.6+)
+
+系統支援透過 Google 帳號快速登入，無需記憶密碼。
+
+### 登入流程
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant App
+    participant Google as Google Sign-In
+    participant Firebase as Firebase Auth
+    participant Server
+    participant DB
+    
+    User->>App: 點擊「Sign in with Google」
+    App->>Google: 開啟 Google Sign-In
+    User->>Google: 選擇 Google 帳號
+    Google-->>App: 返回 Google 使用者資訊
+    App->>Firebase: 使用 Google Credentials 登入
+    Firebase-->>App: 返回 Firebase User (含 ID Token)
+    App->>Server: POST /api/auth/firebase
+    Note right of App: Body: {firebaseUid, email, name, avatarUrl, provider}
+    
+    alt 使用者已存在
+        Server->>DB: 查詢 firebase_uid
+        DB-->>Server: 返回使用者資料
+        Server-->>App: 返回 JWT Token
+    else 新使用者
+        Server->>DB: 建立新 Member (password_hash = null)
+        DB-->>Server: 返回新使用者
+        Server-->>App: 返回 JWT Token
+    end
+    
+    App->>User: 登入成功，進入首頁
+```
+
+### 設定 Google Sign-In
+
+#### 1. Firebase Console 設定
+
+1. 前往 [Firebase Console](https://console.firebase.google.com/)
+2. 選擇專案 → **Authentication** → **Sign-in method**
+3. 啟用 **Google** 登入提供者
+4. 設定 Support email
+
+#### 2. Flutter 前端設定
+
+**pubspec.yaml:**
+```yaml
+dependencies:
+  firebase_core: ^3.8.1
+  firebase_auth: ^5.3.4
+  google_sign_in: ^6.2.2
+```
+
+**web/index.html (Web 平台):**
+```html
+<meta name="google-signin-client_id" content="YOUR_WEB_CLIENT_ID.apps.googleusercontent.com">
+```
+
+**lib/firebase_options.dart:**
+使用 FlutterFire CLI 自動產生：
+```bash
+flutterfire configure
+```
+
+#### 3. 後端設定
+
+**FirebaseAuthController.java** 處理 Firebase 登入請求：
+- 驗證 Firebase ID Token
+- 建立或更新使用者資料
+- 返回 JWT Token
+
+**資料庫欄位 (V5 Migration):**
+```sql
+ALTER TABLE member ADD COLUMN auth_provider VARCHAR(20) DEFAULT 'LOCAL';
+ALTER TABLE member ADD COLUMN firebase_uid VARCHAR(128);
+ALTER TABLE member ALTER COLUMN password_hash DROP NOT NULL;
+```
+
+### 安全考量
+
+| 項目 | 說明 |
+|------|------|
+| `firebase_uid` | 唯一索引，確保一個 Firebase 帳號只對應一個使用者 |
+| `auth_provider` | 記錄登入方式 (`LOCAL` / `GOOGLE` / `FACEBOOK`) |
+| `password_hash` | 社交登入使用者此欄位為 null |
+| Token 驗證 | 後端使用 Firebase Admin SDK 驗證 ID Token |
+
+---
+
+[下一章：角色權限設計 →](./03-permissions.md)

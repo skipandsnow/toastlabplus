@@ -13,8 +13,6 @@ class ProfileScreen extends StatelessWidget {
     final authService = Provider.of<AuthService>(context);
     final member = authService.member;
     final name = member?['name'] ?? 'User';
-    final clubName = member?['clubName'] ?? 'No club joined';
-    final role = member?['role'] ?? 'MEMBER';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
 
     return Scaffold(
@@ -87,37 +85,6 @@ class ProfileScreen extends StatelessWidget {
                               fontSize: 22,
                               fontWeight: FontWeight.w800,
                               color: AppTheme.darkWood,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            clubName,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppTheme.lightWood,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppTheme.softPeach.withValues(alpha: 0.3),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              role == 'PLATFORM_ADMIN'
-                                  ? 'Platform Admin'
-                                  : role == 'CLUB_ADMIN'
-                                  ? 'Club Admin'
-                                  : 'Member',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.darkWood,
-                              ),
                             ),
                           ),
                         ],
@@ -423,6 +390,26 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
               const Divider(),
+
+              // v0.1.6
+              _buildReleaseNote('v0.1.6', '2025-12-22', [
+                '✨ Google 登入 (Firebase Auth)',
+                '✨ 編輯會議主題 (Theme)',
+                '✨ Admin 代理報名/取消',
+                '✨ Meeting Schedule 刪除功能',
+                '✨ Meetings 多選批量刪除',
+                '✨ Profile 頁面 UI 簡化',
+                '🔒 安全性更新 (Dependencies Upgrade)',
+              ]),
+
+              // v0.1.5
+              _buildReleaseNote('v0.1.5', '2025-12-21', [
+                '🔧 CI/CD 重整 (手動觸發/獨立 Workflow)',
+                '🔧 JDK 25 升級',
+                '🐛 LibreOffice PDF Windows 版修正',
+                '🔧 MCP Server 記憶體調整 (1GB)',
+                '🐛 iOS share_plus 修正',
+              ]),
 
               // v0.1.4
               _buildReleaseNote('v0.1.4', '2025-12-19', [

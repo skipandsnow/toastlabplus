@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "96030530148",
+    "project_id": "toastlabplus",
+    "storage_bucket": "toastlabplus.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:96030530148:android:80f2861cf77a169629dd71",
+        "android_client_info": {
+          "package_name": "com.skipandsnow.toastlabplus"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "96030530148-547414j3788iad6ss619pqlqg6qh2emq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqm9Ygd44xd2b2tlpFIKCiIAMe-v6HtQc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "96030530148-547414j3788iad6ss619pqlqg6qh2emq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
