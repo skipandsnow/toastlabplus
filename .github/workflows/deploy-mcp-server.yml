@@ -109,7 +109,7 @@ jobs:
             --image=${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/mcp-server:${{ github.sha }} \
             --region=${{ env.CLOUD_RUN_REGION }} \
             --cpu=1 \
-            --memory=512Mi \
+            --memory=1Gi \
             --min-instances=0 \
             --max-instances=3 \
             --vpc-connector=${{ env.VPC_CONNECTOR }} \
@@ -125,7 +125,7 @@ jobs:
             --image=${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/mcp-server:${{ github.sha }} \
             --region=${{ env.CLOUD_RUN_REGION }} \
             --cpu=1 \
-            --memory=512Mi \
+            --memory=1Gi \
             --min-instances=1 \
             --max-instances=10 \
             --vpc-connector=${{ env.VPC_CONNECTOR }} \

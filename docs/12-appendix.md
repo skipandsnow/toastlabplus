@@ -49,7 +49,7 @@
 - **v1.7** (2025-12-10): 功能細節完善與 UI 更新
   - 通知系統改用 Firebase Cloud Messaging (FCM) + App 內通知
   - 新增 FCM 前置作業設定指南（5 個步驟）
-  - AI 模型升級至 Gemini 3 Pro Preview
+  - AI 模型升級至 Gemini 3 Flash Preview
   - 更新 Gemini API 定價說明（Pay-as-you-go）
   - Agenda 模板設計新增原始 Excel 檔案儲存功能
   - PDF 產生改為基於原始 Excel 模板填入資料

@@ -78,7 +78,7 @@ else:
 app = FastAPI(
     title="Toastlabplus Chat Backend",
     description="Chat Backend with Gemini AI integration for Toastmasters meeting assistance",
-    version="0.1.0"
+    version="0.1.5"
 )
 
 app.add_middleware(

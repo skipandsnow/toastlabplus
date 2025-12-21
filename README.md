@@ -132,6 +132,7 @@ toastlabplus/
 
 | 版本 | 日期 | 變更說明 |
 |------|------|----------|
+| **v0.1.5** (Release) | 2025-12-21 | **CI/CD 重整與系統優化**：GitHub Workflow 拆分為 5 個獨立手動觸發 (E2E/MCP Server/Chat Backend/iOS/Flutter Web)、JDK 25 升級、LibreOffice PDF 生成 Windows 相容修正、HikariCP 連線池限制、iOS share_plus 修正、MCP Server 記憶體調整至 1GB |
 | **v0.1.4** (Release) | 2025-12-19 | **Club Admin 管理與 UI 優化**：新增版本資訊與 Release Notes 頁面、登入頁面顯示版本與版權、修正未正確顯示當前 Club Admin、修正 Club 更新後 UI 未刷新問題、修正 Snackbar 重複顯示、修正 Remove Club Admin API 錯誤、Web metadata 更新 |
 | **v0.1.3** (Release) | 2025-12-18 | **iOS App Store 部署**：GitHub Actions 自動化部署到 App Store Connect、App Store Connect API 整合、隱私政策/支援頁面、Web favicon 更新 |
 | **v0.1.2** (Release) | 2025-12-18 | **會議管理功能增強**：Meeting Schedule 編輯功能、Generate Meetings 月數動態選擇 (1-12)、Agenda 動態 Speaker 行自動取消隱藏、時間格式統一 (HH:mm)、UI 文字英文化 |

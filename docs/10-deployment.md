@@ -9,10 +9,10 @@
 | 組件 | 技術 | 服務 | 規格 |
 |------|------|-----------|------|
 | **Mobile App** | Flutter 3.x, Provider, Dio | - | iOS / Android |
-| **MCP Server** | Spring Boot 3.x, JPA | Cloud Run | 0.5 vCPU, 512MB |
-| **Chat Backend** | Generative AI SDK (Python) | Cloud Run | 0.5 vCPU, 512MB |
+| **MCP Server** | Spring Boot 4.x, JPA, JDK 25 | Cloud Run | 1 vCPU, 1GB |
+| **Chat Backend** | Generative AI SDK (Python) | Cloud Run | 1 vCPU, 512MB |
 | **Database** | PostgreSQL | Cloud SQL | db-f1-micro |
-| **AI Model** | Gemini 3 Pro Preview | Gemini API | Pay-as-you-go |
+| **AI Model** | Gemini 3 Flash Preview | Gemini API | Pay-as-you-go |
 | **Push 通知** | Firebase Cloud Messaging | Firebase (免費) | - |
 
 ## 10.2 In-App Chat SSE 通訊設計
@@ -25,7 +25,7 @@ sequenceDiagram
     participant App as Flutter App
     participant ChatBackend as Chat Backend<br/>(OpenAI ADK)
     participant MCP as MCP Server
-    participant Gemini as Gemini 3 Pro Preview
+    participant Gemini as Gemini 3 Flash Preview
 
     User->>App: 輸入訊息
     App->>ChatBackend: GET /chat/stream?message=...
@@ -95,7 +95,7 @@ Spring Boot MCP Server 提供以下 Tools 供 Chat Backend 調用：
 flowchart LR
     subgraph GoogleAI ["Google AI Studio"]
         APIKey["API Key"]
-        Model["Gemini 3 Pro Preview"]
+        Model["Gemini 3 Flash Preview"]
     end
     
     subgraph ChatBackend ["Chat Backend"]
@@ -123,11 +123,11 @@ flowchart LR
    import google.generativeai as genai
    
    genai.configure(api_key="YOUR_API_KEY")
-   model = genai.GenerativeModel('gemini-3-pro-preview')
+   model = genai.GenerativeModel('gemini-3-flash-preview')
    response = model.generate_content("你好")
    ```
 
-**Gemini 3 Pro Preview 定價**：
+**Gemini 3 Flash Preview 定價**：
 
 | 項目 | 價格 |
 |:---|:---|
@@ -175,7 +175,7 @@ flowchart LR
 | Cloud SQL (PostgreSQL) | `toastlabplus-db` | db-f1-micro | ~$8 |
 | Artifact Registry | `toastlabplus-repo` | Standard | ~$0.10/GB |
 | Secret Manager | - | 依用量 | ~$0.03/secret |
-| Gemini API | Gemini 3 Pro Preview | Pay-as-you-go | ~$10-30 (依用量) |
+| Gemini API | Gemini 3 Flash Preview | Pay-as-you-go | ~$10-30 (依用量) |
 | VPC Connector | `serverless-connector` | f1-micro | ~$7 |
 | **預估總計** | | | **~$35-80** |
 
@@ -190,23 +190,36 @@ flowchart LR
 | **Staging** | `develop` | `toastlabplus--staging-xxxx.web.app` | `mcp-server-staging` | `toastlabplus_staging` |
 | **Production** | `main` | `toastlabplus.web.app` | `mcp-server` | `toastlabplus` |
 
-### 10.6.2 CI/CD Pipeline
+### 10.6.2 CI/CD Pipeline (v0.1.5 Updated)
 
-**1. Backend Pipeline (`deploy.yml`)**
-- **觸發**: `backend/**`, `infrastructure/**` 變更
-- **流程**:
-  - Build Java/Python Docker Image
-  - Push to Artifact Registry
-  - **Deploy to Staging**: 部署至 `mcp-server-staging` (連結 `toastlabplus_staging` DB)
-  - **Deploy to Production**: 部署至 `mcp-server` (連結 `toastlabplus` DB，僅限 `main` 分支)
+專案採用 5 個獨立的 GitHub Workflow，皆為手動觸發 (`workflow_dispatch`)，支援環境選擇。
 
-**2. Frontend Pipeline (`firebase-deploy.yml`)**
-- **觸發**: `mobile/**` 變更
-- **流程**:
-  - Setup Flutter (**3.38.5**, Dart 3.10.4)
-  - Build Web App (注入對應環境的 API URL)
-  - **Deploy to Staging**: Firebase Hosting Preview Channel (`staging`)
-  - **Deploy to Production**: Firebase Hosting Live Channel (僅限 `main` 分支)
+**Workflow 清單**：
+
+| Workflow | 檔案 | 用途 | 環境選擇 |
+|----------|------|------|----------|
+| **Deploy E2E** | `deploy-e2e.yml` | 一次部署所有服務 | ✅ |
+| **Deploy MCP Server** | `deploy-mcp-server.yml` | Spring Boot 後端 | ✅ |
+| **Deploy Chat Backend** | `deploy-chat-backend.yml` | Python AI 後端 | ✅ |
+| **Deploy iOS** | `deploy-ios.yml` | iOS App (TestFlight) | ✅ |
+| **Deploy Flutter Web** | `deploy-firebase-frontend.yml` | Firebase Hosting | ✅ |
+
+**E2E 部署流程**：
+```mermaid
+flowchart LR
+    E2E[Deploy E2E] --> MCP[MCP Server]
+    E2E --> Chat[Chat Backend]
+    MCP --> iOS[iOS App]
+    Chat --> iOS
+    MCP --> Web[Flutter Web]
+    Chat --> Web
+```
+
+**使用方式**：
+1. GitHub → Actions → 選擇對應 Workflow
+2. 點擊 "Run workflow"
+3. 選擇環境 (staging / production)
+4. 點擊 "Run workflow" 執行
 
 ## 10.7 建置檢查清單 (2025-12 Updated)
 

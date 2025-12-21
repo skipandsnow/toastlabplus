@@ -8,7 +8,7 @@ import os
 GCP_PROJECT_ID = os.getenv("GCP_PROJECT_ID", "toastlabplus")
 
 # Gemini API Settings
-GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL_NAME", "gemini-3-pro-preview")
+GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL_NAME", "gemini-3-flash-preview")
 GEMINI_SECRET_NAME = os.getenv("GEMINI_SECRET_NAME", "GEMINI_API_KEY")
 
 # Server Settings
