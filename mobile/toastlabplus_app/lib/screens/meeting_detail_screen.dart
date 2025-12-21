@@ -346,7 +346,15 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
       await file.writeAsBytes(bytes);
 
       // Use share_plus to open share sheet
-      await Share.shareXFiles([XFile(file.path)], subject: 'Agenda');
+      // sharePositionOrigin is required on iPad
+      final box = context.findRenderObject() as RenderBox?;
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        subject: 'Agenda',
+        sharePositionOrigin: box != null
+            ? box.localToGlobal(Offset.zero) & box.size
+            : const Rect.fromLTWH(0, 0, 100, 100),
+      );
     }
   }
 

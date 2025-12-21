@@ -8,6 +8,12 @@ spring:
     username: ${DB_USER}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+    # HikariCP connection pool settings - limit to avoid exhausting Cloud SQL connections
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
 
   jpa:
     hibernate:
