@@ -15,9 +15,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.*;
+import java.nio.file.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @RestController
@@ -50,13 +52,14 @@ public class AgendaGenerationController {
     }
 
     /**
-     * Generate agenda Excel file for a meeting.
+     * Generate agenda file for a meeting (Excel or PDF).
      */
     @GetMapping("/generate")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<?> generateAgenda(
             @PathVariable Long meetingId,
             @RequestParam(required = false) Long templateId,
+            @RequestParam(defaultValue = "excel") String format,
             @AuthenticationPrincipal UserDetails userDetails) {
 
         Meeting meeting = meetingRepository.findById(meetingId).orElse(null);
@@ -89,14 +92,28 @@ public class AgendaGenerationController {
             // Get variable mappings from parsed structure
             List<Map<String, Object>> variableMappings = parseVariableMappings(template.getParsedStructure());
 
-            // Generate filled agenda
+            // Generate filled agenda Excel
             byte[] generatedAgenda = generateFilledAgenda(templateBytes, meeting, variableMappings);
 
-            // Return as downloadable file
-            String filename = String.format("Agenda_%s_%s.xlsx",
+            String baseFilename = String.format("Agenda_%s_%s",
                     meeting.getClub().getName().replaceAll("[^a-zA-Z0-9]", "_"),
                     meeting.getMeetingDate().format(DateTimeFormatter.ISO_DATE));
 
+            // Convert to PDF if requested
+            if ("pdf".equalsIgnoreCase(format)) {
+                byte[] pdfBytes = convertExcelToPdf(generatedAgenda, baseFilename);
+                String filename = baseFilename + ".pdf";
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_PDF);
+                headers.setContentDisposition(ContentDisposition.builder("attachment").filename(filename).build());
+                headers.setContentLength(pdfBytes.length);
+
+                return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+            }
+
+            // Return Excel file
+            String filename = baseFilename + ".xlsx";
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(
                     MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
@@ -128,6 +145,72 @@ public class AgendaGenerationController {
     }
 
     // ==================== Helper Methods ====================
+
+    /**
+     * Convert Excel bytes to PDF using LibreOffice headless.
+     * This preserves the Excel's print configuration (page setup, margins, print
+     * area).
+     */
+    private byte[] convertExcelToPdf(byte[] excelBytes, String baseFilename) throws IOException {
+        // Create temp directory for this conversion
+        Path tempDir = Files.createTempDirectory("agenda-pdf-");
+        Path excelFile = tempDir.resolve(baseFilename + ".xlsx");
+        Path pdfFile = tempDir.resolve(baseFilename + ".pdf");
+
+        try {
+            // Write Excel to temp file
+            Files.write(excelFile, excelBytes);
+
+            // Run LibreOffice headless to convert
+            ProcessBuilder pb = new ProcessBuilder(
+                    "libreoffice",
+                    "--headless",
+                    "--convert-to", "pdf",
+                    "--outdir", tempDir.toString(),
+                    excelFile.toString());
+            pb.redirectErrorStream(true);
+
+            Process process = pb.start();
+
+            // Read output for debugging
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    System.out.println("[LibreOffice] " + line);
+                }
+            }
+
+            boolean completed = process.waitFor(60, TimeUnit.SECONDS);
+            if (!completed) {
+                process.destroyForcibly();
+                throw new IOException("LibreOffice conversion timed out");
+            }
+
+            int exitCode = process.exitValue();
+            if (exitCode != 0) {
+                throw new IOException("LibreOffice conversion failed with exit code: " + exitCode);
+            }
+
+            // Read the generated PDF
+            if (!Files.exists(pdfFile)) {
+                throw new IOException("PDF file was not generated");
+            }
+
+            return Files.readAllBytes(pdfFile);
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Conversion interrupted", e);
+        } finally {
+            // Cleanup temp files
+            try {
+                Files.deleteIfExists(excelFile);
+                Files.deleteIfExists(pdfFile);
+                Files.deleteIfExists(tempDir);
+            } catch (Exception ignored) {
+            }
+        }
+    }
 
     private byte[] downloadFromGcs(String gcsPath) throws IOException {
         Storage storage = StorageOptions.getDefaultInstance().getService();

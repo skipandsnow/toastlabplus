@@ -1,8 +1,12 @@
 import 'dart:convert';
+import 'dart:io' show File;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:universal_html/html.dart' as html;
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../config/api_config.dart';
 import '../services/auth_service.dart';
@@ -215,7 +219,55 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
     }
   }
 
-  Future<void> _generateAgenda() async {
+  Future<void> _showFormatSelectionDialog() async {
+    final format = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Export Format'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Choose the file format for the agenda:'),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.pop(ctx, 'excel'),
+                    icon: const Icon(Icons.table_chart),
+                    label: const Text('Excel'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      side: BorderSide(color: AppTheme.sageGreen),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.pop(ctx, 'pdf'),
+                    icon: const Icon(Icons.picture_as_pdf),
+                    label: const Text('PDF'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      side: BorderSide(color: AppTheme.dustyBlue),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (format != null) {
+      await _generateAgenda(format);
+    }
+  }
+
+  Future<void> _generateAgenda(String format) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final authService = Provider.of<AuthService>(context, listen: false);
 
@@ -223,24 +275,23 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => const AlertDialog(
+      builder: (ctx) => AlertDialog(
         content: Row(
           children: [
-            CircularProgressIndicator(),
-            SizedBox(width: 16),
-            Text('Generating Agenda...'),
+            const CircularProgressIndicator(),
+            const SizedBox(width: 16),
+            Text('Generating ${format.toUpperCase()}...'),
           ],
         ),
       ),
     );
 
     try {
-      // Generate download URL with auth token
+      // Generate download URL with auth token and format
       final url = Uri.parse(
-        '${ApiConfig.mcpServerBaseUrl}/api/meetings/${widget.meetingId}/agenda/generate',
+        '${ApiConfig.mcpServerBaseUrl}/api/meetings/${widget.meetingId}/agenda/generate?format=$format',
       );
 
-      // For web, open in new tab with auth
       final response = await http.get(url, headers: authService.authHeaders);
 
       if (mounted) Navigator.of(context).pop(); // Close loading dialog
@@ -248,15 +299,16 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
       if (response.statusCode == 200) {
         // Download the file
         final bytes = response.bodyBytes;
+        final extension = format == 'pdf' ? 'pdf' : 'xlsx';
         final filename =
-            'Agenda_${widget.clubName}_${_meeting?['meetingDate'] ?? 'meeting'}.xlsx';
+            'Agenda_${widget.clubName}_${_meeting?['meetingDate'] ?? 'meeting'}.$extension';
 
-        // For web, trigger download
-        _downloadFile(bytes, filename);
+        // For web, trigger download; for mobile, share
+        await _downloadFile(bytes, filename);
 
         scaffoldMessenger.showSnackBar(
           SnackBar(
-            content: Text('Agenda downloaded!'),
+            content: Text('Agenda ${format.toUpperCase()} downloaded!'),
             backgroundColor: AppTheme.sageGreen,
           ),
         );
@@ -278,14 +330,24 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
     }
   }
 
-  void _downloadFile(List<int> bytes, String filename) {
-    // For web: create blob and download using universal_html
-    final blob = html.Blob([bytes]);
-    final url = html.Url.createObjectUrlFromBlob(blob);
-    html.AnchorElement(href: url)
-      ..setAttribute('download', filename)
-      ..click();
-    html.Url.revokeObjectUrl(url);
+  Future<void> _downloadFile(List<int> bytes, String filename) async {
+    if (kIsWeb) {
+      // Web: create blob and download using universal_html
+      final blob = html.Blob([bytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      html.AnchorElement(href: url)
+        ..setAttribute('download', filename)
+        ..click();
+      html.Url.revokeObjectUrl(url);
+    } else {
+      // iOS/Android: save to temp directory and share
+      final tempDir = await getTemporaryDirectory();
+      final file = File('${tempDir.path}/$filename');
+      await file.writeAsBytes(bytes);
+
+      // Use share_plus to open share sheet
+      await Share.shareXFiles([XFile(file.path)], subject: 'Agenda');
+    }
   }
 
   Future<void> _deleteMeeting() async {
@@ -388,7 +450,7 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
                             MouseRegion(
                               cursor: SystemMouseCursors.click,
                               child: GestureDetector(
-                                onTap: _generateAgenda,
+                                onTap: _showFormatSelectionDialog,
                                 child: HandDrawnContainer(
                                   color: AppTheme.sageGreen.withValues(
                                     alpha: 0.15,
