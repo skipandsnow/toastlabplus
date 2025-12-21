@@ -1,0 +1,99 @@
+# ============================================
+# End-to-End Deployment
+# Deploy all services at once
+# ============================================
+name: Deploy E2E (All Services)
+
+on:
+    workflow_dispatch:
+        inputs:
+            environment:
+                description: "部署環境"
+                required: true
+                default: "staging"
+                type: choice
+                options:
+                    - staging
+                    - production
+            deploy_ios:
+                description: "部署 iOS App"
+                required: true
+                default: true
+                type: boolean
+            deploy_web:
+                description: "部署 Flutter Web"
+                required: true
+                default: true
+                type: boolean
+
+jobs:
+    # ============================================
+    # Deploy MCP Server
+    # ============================================
+    deploy-mcp-server:
+        name: Deploy MCP Server
+        uses: ./.github/workflows/deploy-mcp-server.yml
+        with:
+            environment: ${{ github.event.inputs.environment }}
+        secrets: inherit
+
+    # ============================================
+    # Deploy Chat Backend
+    # ============================================
+    deploy-chat-backend:
+        name: Deploy Chat Backend
+        uses: ./.github/workflows/deploy-chat-backend.yml
+        with:
+            environment: ${{ github.event.inputs.environment }}
+        secrets: inherit
+
+    # ============================================
+    # Deploy iOS App (optional)
+    # ============================================
+    deploy-ios:
+        name: Deploy iOS App
+        if: github.event.inputs.deploy_ios == 'true'
+        needs: [deploy-mcp-server, deploy-chat-backend]
+        uses: ./.github/workflows/deploy-ios.yml
+        with:
+            environment: ${{ github.event.inputs.environment }}
+            deployment_target: testflight
+        secrets: inherit
+
+    # ============================================
+    # Deploy Flutter Web (optional)
+    # ============================================
+    deploy-web:
+        name: Deploy Flutter Web
+        if: github.event.inputs.deploy_web == 'true'
+        needs: [deploy-mcp-server, deploy-chat-backend]
+        uses: ./.github/workflows/deploy-firebase-frontend.yml
+        with:
+            environment: ${{ github.event.inputs.environment }}
+        secrets: inherit
+
+    # ============================================
+    # Summary
+    # ============================================
+    summary:
+        name: Deployment Summary
+        needs: [deploy-mcp-server, deploy-chat-backend]
+        if: always()
+        runs-on: ubuntu-latest
+        steps:
+            - name: Generate Summary
+              run: |
+                  echo "## 🚀 E2E Deployment Complete" >> $GITHUB_STEP_SUMMARY
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "| Service | Status |" >> $GITHUB_STEP_SUMMARY
+                  echo "|---------|--------|" >> $GITHUB_STEP_SUMMARY
+                  echo "| MCP Server | ${{ needs.deploy-mcp-server.result }} |" >> $GITHUB_STEP_SUMMARY
+                  echo "| Chat Backend | ${{ needs.deploy-chat-backend.result }} |" >> $GITHUB_STEP_SUMMARY
+                  if [ "${{ github.event.inputs.deploy_ios }}" == "true" ]; then
+                    echo "| iOS App | Triggered |" >> $GITHUB_STEP_SUMMARY
+                  fi
+                  if [ "${{ github.event.inputs.deploy_web }}" == "true" ]; then
+                    echo "| Flutter Web | Triggered |" >> $GITHUB_STEP_SUMMARY
+                  fi
+                  echo "" >> $GITHUB_STEP_SUMMARY
+                  echo "**Environment:** ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY

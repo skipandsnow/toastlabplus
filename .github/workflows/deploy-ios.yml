@@ -1,4 +1,8 @@
-name: Deploy iOS to App Store
+# ============================================
+# Deploy iOS to App Store
+# Manual trigger only
+# ============================================
+name: Deploy iOS
 
 on:
   workflow_dispatch:
@@ -19,9 +23,33 @@ on:
         description: "Build Number，留空則自動使用 run number"
         required: false
         type: string
+      environment:
+        description: "API 環境"
+        required: true
+        default: "production"
+        type: choice
+        options:
+          - staging
+          - production
+  workflow_call:
+    inputs:
+      deployment_target:
+        description: "部署目標"
+        required: false
+        type: string
+        default: "testflight"
+      environment:
+        description: "API 環境"
+        required: true
+        type: string
 
 env:
   FLUTTER_VERSION: "3.38.5"
+  # Cloud Run URLs
+  MCP_SERVER_STAGING: https://mcp-server-staging-96030530148.asia-east1.run.app
+  MCP_SERVER_PRODUCTION: https://mcp-server-96030530148.asia-east1.run.app
+  CHAT_BACKEND_STAGING: https://chat-backend-staging-96030530148.asia-east1.run.app
+  CHAT_BACKEND_PRODUCTION: https://chat-backend-96030530148.asia-east1.run.app
 
 jobs:
   build-and-deploy-ios:
@@ -86,14 +114,26 @@ jobs:
           echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_OUTPUT
           echo "📦 Version: $VERSION ($BUILD_NUMBER)"
 
+      - name: Set API URLs
+        id: api-urls
+        run: |
+          ENV="${{ inputs.environment || github.event.inputs.environment || 'production' }}"
+          if [ "$ENV" == "staging" ]; then
+            echo "MCP_URL=${{ env.MCP_SERVER_STAGING }}" >> $GITHUB_OUTPUT
+            echo "CHAT_URL=${{ env.CHAT_BACKEND_STAGING }}" >> $GITHUB_OUTPUT
+          else
+            echo "MCP_URL=${{ env.MCP_SERVER_PRODUCTION }}" >> $GITHUB_OUTPUT
+            echo "CHAT_URL=${{ env.CHAT_BACKEND_PRODUCTION }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build Flutter iOS (no codesign)
         working-directory: ./mobile/toastlabplus_app
         run: |
           flutter build ios --release --no-codesign \
             --build-name=${{ steps.version.outputs.VERSION }} \
             --build-number=${{ steps.version.outputs.BUILD_NUMBER }} \
-            --dart-define=MCP_SERVER_URL=https://mcp-server-96030530148.asia-east1.run.app \
-            --dart-define=CHAT_BACKEND_URL=https://chat-backend-96030530148.asia-east1.run.app
+            --dart-define=MCP_SERVER_URL=${{ steps.api-urls.outputs.MCP_URL }} \
+            --dart-define=CHAT_BACKEND_URL=${{ steps.api-urls.outputs.CHAT_URL }}
 
       - name: Build and Archive with Xcode
         working-directory: ./mobile/toastlabplus_app/ios
@@ -121,16 +161,19 @@ jobs:
 
       - name: Summary
         run: |
+          DEPLOY_TARGET="${{ inputs.deployment_target || github.event.inputs.deployment_target || 'testflight' }}"
+          ENV="${{ inputs.environment || github.event.inputs.environment || 'production' }}"
           echo "## 🍎 iOS Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| **Version** | ${{ steps.version.outputs.VERSION }} |" >> $GITHUB_STEP_SUMMARY
           echo "| **Build Number** | ${{ steps.version.outputs.BUILD_NUMBER }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Target** | ${{ github.event.inputs.deployment_target }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Target** | $DEPLOY_TARGET |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Environment** | $ENV |" >> $GITHUB_STEP_SUMMARY
           echo "| **Bundle ID** | com.skipandsnow.toastlabplus |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ github.event.inputs.deployment_target }}" == "testflight" ]; then
+          if [ "$DEPLOY_TARGET" == "testflight" ]; then
             echo "✅ Build uploaded to **TestFlight**. Check App Store Connect for processing status." >> $GITHUB_STEP_SUMMARY
           else
             echo "✅ Build uploaded to **App Store Connect**. Submit for review in the console." >> $GITHUB_STEP_SUMMARY
