@@ -126,8 +126,8 @@ jobs:
             --region=${{ env.CLOUD_RUN_REGION }} \
             --cpu=1 \
             --memory=1Gi \
-            --min-instances=1 \
-            --max-instances=10 \
+            --min-instances=0 \
+            --max-instances=5 \
             --vpc-connector=${{ env.VPC_CONNECTOR }} \
             --add-cloudsql-instances=${{ env.CLOUD_SQL_CONNECTION }} \
             --set-secrets="DB_PASSWORD=${{ env.DB_PASSWORD_SECRET }}:latest,DB_USER=${{ env.DB_USER_SECRET }}:latest" \
