@@ -25,16 +25,19 @@ public class MemberController {
     private final com.toastlabplus.repository.ClubRepository clubRepository;
     private final ClubAdminRepository clubAdminRepository;
     private final ClubMembershipRepository clubMembershipRepository;
+    private final com.toastlabplus.repository.RoleSlotRepository roleSlotRepository;
     private com.toastlabplus.service.StorageService storageService;
 
     public MemberController(MemberRepository memberRepository,
             com.toastlabplus.repository.ClubRepository clubRepository,
             ClubAdminRepository clubAdminRepository,
-            ClubMembershipRepository clubMembershipRepository) {
+            ClubMembershipRepository clubMembershipRepository,
+            com.toastlabplus.repository.RoleSlotRepository roleSlotRepository) {
         this.memberRepository = memberRepository;
         this.clubRepository = clubRepository;
         this.clubAdminRepository = clubAdminRepository;
         this.clubMembershipRepository = clubMembershipRepository;
+        this.roleSlotRepository = roleSlotRepository;
     }
 
     @org.springframework.beans.factory.annotation.Autowired(required = false)
@@ -247,6 +250,68 @@ public class MemberController {
                 .map(m -> MemberDto.fromEntity(m.getMember()))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(members);
+    }
+
+    /**
+     * Delete a member (Platform Admin only).
+     * Requires email confirmation to prevent accidental deletion.
+     */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @Transactional
+    public ResponseEntity<?> deleteMember(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, String> requestBody,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        String confirmEmail = requestBody.get("confirmEmail");
+        if (confirmEmail == null || confirmEmail.isBlank()) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", "confirmEmail is required"));
+        }
+
+        Member targetMember = memberRepository.findById(id).orElse(null);
+        if (targetMember == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Prevent deleting Platform Admin
+        if ("PLATFORM_ADMIN".equals(targetMember.getRole())) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", "Cannot delete Platform Admin"));
+        }
+
+        // Verify email confirmation
+        if (!targetMember.getEmail().equals(confirmEmail)) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("error", "Email confirmation does not match"));
+        }
+
+        // Delete related data
+        // 1. Clear RoleSlot assignments (set assignedMember to null)
+        if (roleSlotRepository != null) {
+            roleSlotRepository.findByAssignedMemberId(id).forEach(slot -> {
+                slot.setAssignedMember(null);
+                roleSlotRepository.save(slot);
+            });
+        }
+
+        // 2. Delete ClubMembership records
+        clubMembershipRepository.findByMemberId(id).forEach(membership -> {
+            clubMembershipRepository.delete(membership);
+        });
+
+        // 3. Delete ClubAdmin records
+        clubAdminRepository.findByMemberId(id).forEach(admin -> {
+            clubAdminRepository.delete(admin);
+        });
+
+        // 4. Delete avatar if exists
+        if (storageService != null && targetMember.getAvatarUrl() != null) {
+            storageService.deleteFile(targetMember.getAvatarUrl());
+        }
+
+        // 5. Delete the member
+        memberRepository.delete(targetMember);
+
+        return ResponseEntity.ok(java.util.Map.of("message", "Member deleted successfully"));
     }
 
     private List<Long> getAdminClubIds(Long memberId) {

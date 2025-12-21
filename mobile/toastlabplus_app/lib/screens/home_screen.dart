@@ -9,6 +9,7 @@ import '../widgets/hand_drawn_widgets.dart';
 import '../services/auth_service.dart';
 
 import 'club_detail_management_screen.dart';
+import 'member_management_screen.dart';
 
 import 'club_public_screen.dart';
 import 'create_club_screen.dart';
@@ -612,6 +613,68 @@ class _HomeScreenState extends State<HomeScreen> {
                         Icon(
                           Icons.arrow_forward_ios,
                           color: AppTheme.sageGreen,
+                          size: 20,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Member Management Block
+                  HandDrawnContainer(
+                    color: AppTheme.dustyBlue.withValues(alpha: 0.1),
+                    borderColor: AppTheme.dustyBlue,
+                    borderRadius: 24,
+                    padding: const EdgeInsets.all(24),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const MemberManagementScreen(),
+                        ),
+                      );
+                    },
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppTheme.dustyBlue,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.people_rounded,
+                            color: Colors.white,
+                            size: 32,
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Member Management',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.darkWood,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'View and manage all members',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: AppTheme.lightWood,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          color: AppTheme.dustyBlue,
                           size: 20,
                         ),
                       ],

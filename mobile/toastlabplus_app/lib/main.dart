@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'config/api_config.dart';
 import 'screens/home_screen.dart';
 import 'screens/chat_screen.dart';
@@ -15,6 +17,16 @@ void main() async {
   debugPrint('🚀 App Starting - ToastLabPlus (Prod Debug)');
   debugPrint('📍 MCP Server URL: ${ApiConfig.mcpServerBaseUrl}');
   debugPrint('📍 Chat Backend URL: ${ApiConfig.chatBackendBaseUrl}');
+
+  // Initialize Firebase
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    debugPrint('🔥 Firebase initialized successfully');
+  } catch (e) {
+    debugPrint('⚠️ Firebase initialization failed: $e');
+  }
 
   final authService = AuthService();
   await authService.init();

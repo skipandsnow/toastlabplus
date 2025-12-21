@@ -30,6 +30,10 @@ class _MeetingListScreenState extends State<MeetingListScreen> {
   bool _isLoading = true;
   String? _error;
 
+  // Multi-select state
+  bool _isSelectionMode = false;
+  Set<int> _selectedIds = {};
+
   @override
   void initState() {
     super.initState();
@@ -75,6 +79,129 @@ class _MeetingListScreenState extends State<MeetingListScreen> {
         });
       }
     }
+  }
+
+  void _toggleSelectionMode() {
+    setState(() {
+      _isSelectionMode = !_isSelectionMode;
+      if (!_isSelectionMode) {
+        _selectedIds.clear();
+      }
+    });
+  }
+
+  void _toggleSelection(int meetingId) {
+    setState(() {
+      if (_selectedIds.contains(meetingId)) {
+        _selectedIds.remove(meetingId);
+      } else {
+        _selectedIds.add(meetingId);
+      }
+    });
+  }
+
+  void _selectAll() {
+    setState(() {
+      if (_selectedIds.length == _meetings.length) {
+        _selectedIds.clear();
+      } else {
+        _selectedIds = _meetings.map((m) => m.id).toSet();
+      }
+    });
+  }
+
+  Future<void> _deleteSelected() async {
+    if (_selectedIds.isEmpty) return;
+
+    final count = _selectedIds.length;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Delete Meetings'),
+        content: Text(
+          'Are you sure you want to delete $count meeting(s)?\n\nThis action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    // Show loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        content: Row(
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(width: 16),
+            Text('Deleting $count meeting(s)...'),
+          ],
+        ),
+      ),
+    );
+
+    int successCount = 0;
+    int failCount = 0;
+
+    // Delete each meeting
+    for (final id in _selectedIds.toList()) {
+      try {
+        final response = await http.delete(
+          Uri.parse('${ApiConfig.mcpServerBaseUrl}/api/meetings/$id'),
+          headers: authService.authHeaders,
+        );
+        if (response.statusCode == 200) {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      } catch (_) {
+        failCount++;
+      }
+    }
+
+    if (mounted) Navigator.of(context).pop(); // Close loading dialog
+
+    if (failCount == 0) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('Deleted $successCount meeting(s)'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    } else {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('Deleted $successCount, failed $failCount'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+
+    setState(() {
+      _isSelectionMode = false;
+      _selectedIds.clear();
+    });
+    _loadMeetings();
   }
 
   Color _getStatusColor(String status) {
@@ -156,7 +283,64 @@ class _MeetingListScreenState extends State<MeetingListScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
+            // Selection toolbar
+            if (_meetings.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  children: [
+                    if (_isSelectionMode) ...[
+                      TextButton.icon(
+                        onPressed: _selectAll,
+                        icon: Icon(
+                          _selectedIds.length == _meetings.length
+                              ? Icons.deselect
+                              : Icons.select_all,
+                          size: 18,
+                        ),
+                        label: Text(
+                          _selectedIds.length == _meetings.length
+                              ? 'Deselect All'
+                              : 'Select All',
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${_selectedIds.length} selected',
+                        style: TextStyle(color: AppTheme.lightWood),
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton.icon(
+                        onPressed: _selectedIds.isEmpty
+                            ? null
+                            : _deleteSelected,
+                        icon: Icon(
+                          Icons.delete,
+                          size: 18,
+                          color: Colors.red.shade400,
+                        ),
+                        label: Text(
+                          'Delete',
+                          style: TextStyle(color: Colors.red.shade400),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _toggleSelectionMode,
+                        child: const Text('Cancel'),
+                      ),
+                    ] else ...[
+                      const Spacer(),
+                      TextButton.icon(
+                        onPressed: _toggleSelectionMode,
+                        icon: const Icon(Icons.checklist, size: 18),
+                        label: const Text('Select'),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            const SizedBox(height: 12),
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
@@ -225,29 +409,56 @@ class _MeetingListScreenState extends State<MeetingListScreen> {
 
   Widget _buildMeetingCard(Meeting meeting) {
     final statusColor = _getStatusColor(meeting.status);
+    final isSelected = _selectedIds.contains(meeting.id);
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => MeetingDetailScreen(
-                meetingId: meeting.id,
-                clubId: widget.clubId,
-                clubName: widget.clubName,
+          if (_isSelectionMode) {
+            _toggleSelection(meeting.id);
+          } else {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => MeetingDetailScreen(
+                  meetingId: meeting.id,
+                  clubId: widget.clubId,
+                  clubName: widget.clubName,
+                ),
               ),
-            ),
-          ).then((_) => _loadMeetings());
+            ).then((_) => _loadMeetings());
+          }
+        },
+        onLongPress: () {
+          if (!_isSelectionMode) {
+            setState(() {
+              _isSelectionMode = true;
+              _selectedIds.add(meeting.id);
+            });
+          }
         },
         child: HandDrawnContainer(
-          color: Colors.white,
-          borderColor: statusColor.withValues(alpha: 0.5),
+          color: isSelected
+              ? AppTheme.dustyBlue.withValues(alpha: 0.1)
+              : Colors.white,
+          borderColor: isSelected
+              ? AppTheme.dustyBlue
+              : statusColor.withValues(alpha: 0.5),
           borderRadius: 16,
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
+              // Checkbox in selection mode
+              if (_isSelectionMode)
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: Checkbox(
+                    value: isSelected,
+                    onChanged: (_) => _toggleSelection(meeting.id),
+                    activeColor: AppTheme.dustyBlue,
+                  ),
+                ),
               Container(
                 width: 56,
                 height: 56,
@@ -332,7 +543,8 @@ class _MeetingListScreenState extends State<MeetingListScreen> {
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: AppTheme.lightWood),
+              if (!_isSelectionMode)
+                Icon(Icons.chevron_right, color: AppTheme.lightWood),
             ],
           ),
         ),

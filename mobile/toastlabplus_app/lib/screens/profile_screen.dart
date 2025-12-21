@@ -13,8 +13,6 @@ class ProfileScreen extends StatelessWidget {
     final authService = Provider.of<AuthService>(context);
     final member = authService.member;
     final name = member?['name'] ?? 'User';
-    final clubName = member?['clubName'] ?? 'No club joined';
-    final role = member?['role'] ?? 'MEMBER';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'U';
 
     return Scaffold(
@@ -87,37 +85,6 @@ class ProfileScreen extends StatelessWidget {
                               fontSize: 22,
                               fontWeight: FontWeight.w800,
                               color: AppTheme.darkWood,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            clubName,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppTheme.lightWood,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppTheme.softPeach.withValues(alpha: 0.3),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              role == 'PLATFORM_ADMIN'
-                                  ? 'Platform Admin'
-                                  : role == 'CLUB_ADMIN'
-                                  ? 'Club Admin'
-                                  : 'Member',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.darkWood,
-                              ),
                             ),
                           ),
                         ],

@@ -14,19 +14,19 @@ ToastLabPlus 是專為 Toastmasters 國際演講會設計的會議管理系統�
 
 | 功能模組 | 說明 |
 |----------|------|
-| 🔐 **使用者認證** | 註冊、登入、JWT Token 驗證 |
+| 🔐 **使用者認證** | 註冊、登入、JWT Token 驗證、Google 登入 |
 | 👤 **個人檔案** | 頭像上傳 (GCP Storage)、個人資訊編輯 |
 | 🏢 **分會管理** | 建立分會、編輯分會資訊、刪除分會 |
-| 👥 **會員管理** | 會員加入申請、審核 (Approve/Reject) |
+| 👥 **會員管理** | 會員加入申請、審核 (Approve/Reject)、平台會員管理 |
 | 🎖️ **多分會管理** | Club Admin 可同時管理多個分會 |
 | ℹ️ **詳細社團資訊** | 顯示與編輯聯絡人、時間範圍、地點 |
 | 🔍 **社團搜尋** | 關鍵字搜尋所有社團、已加入社團 |
-| 📅 **會議管理** | 建立會議排程、自動產生會議、編輯排程 |
-| 🎭 **角色報名** | 會員報名會議角色 (TME, Speaker 等) |
-| 📝 **Agenda 產生** | AI 解析模板 (Gemini)、自動產生議程 Excel、動態 Speaker 行 |
+| 📅 **會議管理** | 建立會議排程、自動產生會議、編輯排程、刪除排程 |
+| 🎭 **角色報名** | 會員報名會議角色、Admin 代理報名、批量刪除會議 |
+| 📝 **Agenda 產生** | AI 解析模板 (Gemini)、自動產生議程 Excel/PDF、動態 Speaker 行 |
 | 📋 **模板管理** | 上傳 Excel 模板、AI 解析變數位置 |
-| 🗑️ **刪除會議** | Club Admin 可刪除會議 |
-| ⚙️ **排程編輯** | 編輯現有會議排程、動態生成月數選擇 |
+| ✏️ **會議編輯** | 編輯會議主題、Club Admin 可刪除會議 |
+| ⚙️ **排程編輯** | 編輯現有會議排程、動態生成月數選擇、刪除排程 |
 
 ### 🚧 開發中 / 未來功能
 
@@ -132,6 +132,7 @@ toastlabplus/
 
 | 版本 | 日期 | 變更說明 |
 |------|------|----------|
+| **v0.1.6** (Release) | 2025-12-22 | **會議管理與社交登入增強**：Google 登入 (Firebase Auth)、編輯會議主題、Admin 代理報名/取消、Meeting Schedule 刪除功能、Meetings 多選批量刪除、Profile 頁面 UI 簡化 |
 | **v0.1.5** (Release) | 2025-12-21 | **CI/CD 重整與系統優化**：GitHub Workflow 拆分為 5 個獨立手動觸發 (E2E/MCP Server/Chat Backend/iOS/Flutter Web)、JDK 25 升級、LibreOffice PDF 生成 Windows 相容修正、HikariCP 連線池限制、iOS share_plus 修正、MCP Server 記憶體調整至 1GB |
 | **v0.1.4** (Release) | 2025-12-19 | **Club Admin 管理與 UI 優化**：新增版本資訊與 Release Notes 頁面、登入頁面顯示版本與版權、修正未正確顯示當前 Club Admin、修正 Club 更新後 UI 未刷新問題、修正 Snackbar 重複顯示、修正 Remove Club Admin API 錯誤、Web metadata 更新 |
 | **v0.1.3** (Release) | 2025-12-18 | **iOS App Store 部署**：GitHub Actions 自動化部署到 App Store Connect、App Store Connect API 整合、隱私政策/支援頁面、Web favicon 更新 |

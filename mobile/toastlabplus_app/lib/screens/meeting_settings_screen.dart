@@ -216,6 +216,68 @@ class _MeetingSettingsScreenState extends State<MeetingSettingsScreen> {
     }
   }
 
+  Future<void> _deleteSchedule(MeetingSchedule schedule) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Delete Schedule'),
+        content: Text(
+          'Are you sure you want to delete "${schedule.name ?? 'this schedule'}"?\n\nThis will NOT delete existing meetings.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    try {
+      final response = await http.delete(
+        Uri.parse(
+          '${ApiConfig.mcpServerBaseUrl}/api/clubs/${widget.clubId}/meeting-schedules/${schedule.id}',
+        ),
+        headers: authService.authHeaders,
+      );
+
+      if (response.statusCode == 200) {
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('Schedule deleted'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        _loadSchedules();
+      } else {
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('Failed to delete schedule'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -469,6 +531,18 @@ class _MeetingSettingsScreenState extends State<MeetingSettingsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
+              TextButton.icon(
+                onPressed: () => _deleteSchedule(schedule),
+                icon: Icon(
+                  Icons.delete_outline,
+                  size: 18,
+                  color: Colors.red.shade400,
+                ),
+                label: Text(
+                  'Delete',
+                  style: TextStyle(color: Colors.red.shade400),
+                ),
+              ),
               TextButton.icon(
                 onPressed: () => _editSchedule(schedule),
                 icon: const Icon(Icons.edit_outlined, size: 18),

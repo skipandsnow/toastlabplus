@@ -358,6 +358,210 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
     }
   }
 
+  /// Check if current user is admin
+  bool _isAdmin() {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final member = authService.member;
+    final role = member?['role'] ?? 'MEMBER';
+    return role == 'PLATFORM_ADMIN' || role == 'CLUB_ADMIN';
+  }
+
+  /// Show dialog to edit meeting theme
+  Future<void> _showEditThemeDialog() async {
+    final controller = TextEditingController(text: _meeting?['theme'] ?? '');
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Edit Meeting Theme'),
+        content: SizedBox(
+          width: MediaQuery.of(ctx).size.width * 0.8,
+          child: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              labelText: 'Theme',
+              hintText:
+                  'e.g. Leadership Journey\nDescribe the meeting theme...',
+              alignLabelWithHint: true,
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 10,
+            minLines: 5,
+            maxLength: 200,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.sageGreen,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == null) return;
+
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    try {
+      final response = await http.patch(
+        Uri.parse(
+          '${ApiConfig.mcpServerBaseUrl}/api/meetings/${widget.meetingId}',
+        ),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${authService.token}',
+        },
+        body: json.encode({'theme': result}),
+      );
+
+      if (response.statusCode == 200) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: const Text('Theme updated!'),
+            backgroundColor: AppTheme.sageGreen,
+          ),
+        );
+        _loadData();
+      } else {
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(
+            content: Text('Failed to update theme'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  /// Show dialog to assign a member to a role (Admin only)
+  Future<void> _showAssignMemberDialog(RoleSlot slot) async {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    // Load club members
+    List<dynamic> members = [];
+    try {
+      final response = await http.get(
+        Uri.parse(
+          '${ApiConfig.mcpServerBaseUrl}/api/club-memberships/club/${widget.clubId}',
+        ),
+        headers: authService.authHeaders,
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body) as List<dynamic>;
+        members = data.where((m) => m['status'] == 'APPROVED').toList();
+      }
+    } catch (e) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('Error loading members: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+
+    final selectedMember = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Assign ${slot.displayName}'),
+        content: SizedBox(
+          width: 300,
+          height: 400,
+          child: members.isEmpty
+              ? const Center(child: Text('No members found'))
+              : ListView.builder(
+                  itemCount: members.length,
+                  itemBuilder: (_, index) {
+                    final m = members[index];
+                    final member = m['member'] as Map<String, dynamic>?;
+                    final name = member?['name'] ?? 'Unknown';
+                    final email = member?['email'] ?? '';
+                    final memberId = member?['id'];
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: AppTheme.sageGreen.withValues(
+                          alpha: 0.2,
+                        ),
+                        child: Text(
+                          name[0].toUpperCase(),
+                          style: TextStyle(color: AppTheme.sageGreen),
+                        ),
+                      ),
+                      title: Text(name),
+                      subtitle: Text(email),
+                      onTap: () => Navigator.pop(ctx, {
+                        'memberId': memberId,
+                        'memberName': name,
+                      }),
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+
+    if (selectedMember == null) return;
+
+    // Call assign API
+    try {
+      final response = await http.post(
+        Uri.parse(
+          '${ApiConfig.mcpServerBaseUrl}/api/meetings/${widget.meetingId}/roles/${slot.id}/assign',
+        ),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${authService.token}',
+        },
+        body: json.encode({'memberId': selectedMember['memberId']}),
+      );
+
+      if (response.statusCode == 200) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              '${selectedMember['memberName']} assigned to ${slot.displayName}!',
+            ),
+            backgroundColor: AppTheme.sageGreen,
+          ),
+        );
+        _loadData();
+      } else {
+        final error = json.decode(response.body)['error'] ?? 'Failed to assign';
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text(error), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
   Future<void> _deleteMeeting() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -601,6 +805,13 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
                   ],
                 ),
               ),
+              // Edit theme button (Admin only)
+              if (_isAdmin())
+                IconButton(
+                  onPressed: _showEditThemeDialog,
+                  icon: Icon(Icons.edit, color: AppTheme.dustyBlue, size: 20),
+                  tooltip: 'Edit Theme',
+                ),
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -762,13 +973,14 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
               ],
             ),
           ),
-          if (isMe)
+          // Cancel button: show for self OR for admin when someone is assigned
+          if (isMe || (slot.isAssigned && _isAdmin()))
             TextButton(
               onPressed: () => _cancelSignUp(slot),
               style: TextButton.styleFrom(foregroundColor: AppTheme.lightWood),
               child: const Text('Cancel'),
             )
-          else if (!slot.isAssigned)
+          else if (!slot.isAssigned) ...[
             ElevatedButton(
               onPressed: () => _signUpForRole(slot),
               style: ElevatedButton.styleFrom(
@@ -778,6 +990,21 @@ class _MeetingDetailScreenState extends State<MeetingDetailScreen> {
               ),
               child: const Text('Sign Up'),
             ),
+            // Admin assign button
+            if (_isAdmin())
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: IconButton(
+                  onPressed: () => _showAssignMemberDialog(slot),
+                  icon: Icon(
+                    Icons.person_add,
+                    color: AppTheme.dustyBlue,
+                    size: 20,
+                  ),
+                  tooltip: 'Assign Member',
+                ),
+              ),
+          ],
         ],
       ),
     );
