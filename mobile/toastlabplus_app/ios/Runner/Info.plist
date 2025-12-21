@@ -53,5 +53,16 @@
 	<string>ToastLab+ needs microphone access for audio recording features.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.96030530148-etk7qjsgk6lsv0ds2mh2dm6k1p4ck4no</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
