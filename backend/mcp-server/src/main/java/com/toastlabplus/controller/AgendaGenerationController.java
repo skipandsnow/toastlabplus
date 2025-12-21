@@ -162,8 +162,26 @@ public class AgendaGenerationController {
             Files.write(excelFile, excelBytes);
 
             // Run LibreOffice headless to convert
+            // Use full path on Windows to avoid Git Bash PATH issues
+            String libreOfficeCmd;
+            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                // Try common Windows installation paths
+                String[] windowsPaths = {
+                        "C:\\Program Files\\LibreOffice\\program\\soffice.exe",
+                        "C:\\Program Files (x86)\\LibreOffice\\program\\soffice.exe"
+                };
+                libreOfficeCmd = "soffice"; // fallback
+                for (String path : windowsPaths) {
+                    if (new File(path).exists()) {
+                        libreOfficeCmd = path;
+                        break;
+                    }
+                }
+            } else {
+                libreOfficeCmd = "libreoffice";
+            }
             ProcessBuilder pb = new ProcessBuilder(
-                    "libreoffice",
+                    libreOfficeCmd,
                     "--headless",
                     "--convert-to", "pdf",
                     "--outdir", tempDir.toString(),
