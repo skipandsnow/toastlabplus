@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../services/chat_service.dart';
+import '../services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/hand_drawn_widgets.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -16,14 +19,13 @@ class _ChatScreenState extends State<ChatScreen> {
   final ChatService _chatService = ChatService();
   final List<_ChatMessage> _messages = [
     _ChatMessage(
-      text:
-          'Hello! I noticed the TME role is available for 12/10. Would you like to sign up?',
+      text: '您好！我是 Toastmasters 會議助手，可以幫您查詢會議、分會資訊，或報名角色。請問有什麼可以幫您的嗎？',
       isUser: false,
-      showActionButtons: true,
     ),
   ];
   final List<ChatMessage> _conversationHistory = [];
   bool _isTyping = false;
+  String _statusMessage = 'ToastLab AI is typing...';
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +33,7 @@ class _ChatScreenState extends State<ChatScreen> {
       backgroundColor: AppTheme.ricePaper,
       appBar: AppBar(
         title: Text(
-          'Assistant',
+          'ToastLab AI',
           style: TextStyle(
             color: AppTheme.darkWood,
             fontWeight: FontWeight.bold,
@@ -146,60 +148,57 @@ class _ChatScreenState extends State<ChatScreen> {
             ? CrossAxisAlignment.end
             : CrossAxisAlignment.start,
         children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 280),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: message.isUser
-                    ? AppTheme.sageGreen.withValues(alpha: 0.15)
-                    : Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(20),
-                  topRight: const Radius.circular(20),
-                  bottomLeft: Radius.circular(message.isUser ? 20 : 4),
-                  bottomRight: Radius.circular(message.isUser ? 4 : 20),
-                ),
-                border: Border.all(
+          if (!message.isUser &&
+              message.thoughtProcess != null &&
+              message.thoughtProcess!.isNotEmpty)
+            _buildThinkingProcess(message.thoughtProcess!),
+          if (message.text.isNotEmpty)
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 280),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
                   color: message.isUser
-                      ? AppTheme.sageGreen.withValues(alpha: 0.1)
-                      : AppTheme.lightWood.withValues(alpha: 0.1),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.lightWood.withValues(alpha: 0.03),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
+                      ? AppTheme.sageGreen.withValues(alpha: 0.15)
+                      : Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(20),
+                    topRight: const Radius.circular(20),
+                    bottomLeft: Radius.circular(message.isUser ? 20 : 4),
+                    bottomRight: Radius.circular(message.isUser ? 4 : 20),
                   ),
-                ],
-              ),
-              child: Text(
-                message.text,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppTheme.darkWood,
-                  height: 1.5,
+                  border: Border.all(
+                    color: message.isUser
+                        ? AppTheme.sageGreen.withValues(alpha: 0.1)
+                        : AppTheme.lightWood.withValues(alpha: 0.1),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.lightWood.withValues(alpha: 0.03),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  message.text,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppTheme.darkWood,
+                    height: 1.5,
+                  ),
                 ),
               ),
             ),
-          ),
-          if (message.showActionButtons)
+          if (message.actions != null && message.actions!.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 12, left: 4),
               child: Wrap(
                 spacing: 8,
-                children: [
-                  _buildActionButton(
-                    'Yes, sign me up',
-                    AppTheme.sageGreen,
-                    Icons.check,
-                  ),
-                  _buildActionButton(
-                    'No thanks',
-                    AppTheme.softPeach,
-                    Icons.close,
-                  ),
-                ],
+                runSpacing: 8,
+                children: message.actions!.map((action) {
+                  return _buildDynamicActionButton(action);
+                }).toList(),
               ),
             ),
           const SizedBox(height: 16),
@@ -208,9 +207,77 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildActionButton(String label, Color color, IconData icon) {
+  Widget _buildThinkingProcess(List<StepDetail> steps) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      constraints: const BoxConstraints(maxWidth: 280),
+      // Use ExpansionTile-like behavior
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+          childrenPadding: const EdgeInsets.only(
+            left: 12,
+            right: 12,
+            bottom: 12,
+          ),
+          collapsedBackgroundColor: Colors.transparent,
+          backgroundColor: Colors.transparent,
+          leading: Icon(
+            Icons.psychology,
+            color: AppTheme.lightWood.withValues(alpha: 0.6),
+            size: 20,
+          ),
+          title: Text(
+            'Thinking Process (${steps.length} steps)',
+            style: TextStyle(
+              fontSize: 13,
+              color: AppTheme.lightWood.withValues(alpha: 0.8),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          children: steps.map((step) {
+            final isToolCall = step.stepType == 'tool_call';
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    isToolCall ? Icons.build_circle_outlined : Icons.output,
+                    size: 16,
+                    color: isToolCall ? Colors.blueGrey : Colors.green[700],
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      step.label ?? step.content,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppTheme.darkWood.withValues(alpha: 0.9),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDynamicActionButton(ActionButton action) {
+    final color = action.actionType == 'signup_role'
+        ? AppTheme.sageGreen
+        : AppTheme.softPeach;
+    final icon = action.actionType == 'signup_role'
+        ? Icons.how_to_reg
+        : Icons.info_outline;
+
     return GestureDetector(
-      onTap: () => _sendMessage(label),
+      onTap: () => _handleActionButton(action),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
@@ -230,7 +297,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Icon(icon, color: Colors.white, size: 16),
             const SizedBox(width: 6),
             Text(
-              label,
+              action.label,
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -241,6 +308,17 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _handleActionButton(ActionButton action) async {
+    if (action.actionType == 'signup_role') {
+      final roleName = action.payload['roleName'] as String?;
+      final meetingId = action.payload['meetingId'];
+      final roleSlotId = action.payload['roleSlotId'];
+
+      // Send a message to confirm signup
+      await _sendMessage('我要報名 $roleName (會議 #$meetingId, 角色 #$roleSlotId)');
+    }
   }
 
   Widget _buildTypingIndicator() {
@@ -261,7 +339,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             const SizedBox(width: 8),
             Text(
-              'Assistant is typing...',
+              _statusMessage,
               style: TextStyle(color: AppTheme.lightWood, fontSize: 12),
             ),
           ],
@@ -279,26 +357,119 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {
       _messages.add(_ChatMessage(text: userMessage, isUser: true));
       _isTyping = true;
+      _statusMessage = 'ToastLab AI is typing...';
+    });
+
+    // Create a placeholder message for the assistant
+    final assistantMessage = _ChatMessage(
+      text: '',
+      isUser: false,
+      actions: [],
+      thoughtProcess: [],
+    );
+
+    setState(() {
+      _messages.add(assistantMessage);
     });
 
     try {
-      final response = await _chatService.sendMessage(
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final user = FirebaseAuth.instance.currentUser;
+      final userEmail = user?.email ?? 'anonymous';
+
+      // Try to get name from AuthService member first (our backend profile),
+      // otherwise fall back to Firebase displayName
+      final userName =
+          authService.member?['name'] as String? ?? user?.displayName;
+
+      final StringBuffer messageBuffer = StringBuffer();
+
+      await for (final chunk in _chatService.streamChat(
         userMessage,
         history: _conversationHistory,
-      );
+        userEmail: userEmail,
+        userName: userName,
+      )) {
+        setState(() {
+          // Handle different chunk types
+          if (chunk.type == 'text') {
+            if (chunk.content != null) {
+              messageBuffer.write(chunk.content);
+              assistantMessage.text = messageBuffer.toString();
+            }
+          } else if (chunk.type == 'thought_start') {
+            if (chunk.tool != null) {
+              assistantMessage.thoughtProcess!.add(
+                StepDetail(
+                  stepType: 'tool_call',
+                  content: chunk.tool!, // Store just tool name for display
+                  label: chunk.toolLabel,
+                ),
+              );
+              _statusMessage = 'Running ${chunk.toolLabel ?? chunk.tool}...';
+            }
+          } else if (chunk.type == 'thought_end') {
+            // Find the last tool call and update it or add result
+            if (assistantMessage.thoughtProcess!.isNotEmpty) {
+              try {
+                final index = assistantMessage.thoughtProcess!.lastIndexWhere(
+                  (s) => s.stepType == 'tool_call' && s.content == chunk.tool,
+                );
+                if (index != -1) {
+                  // Replace with a "done" version
+                  final oldStep = assistantMessage.thoughtProcess![index];
+                  assistantMessage.thoughtProcess![index] = StepDetail(
+                    stepType: 'tool_done',
+                    content: chunk.tool!,
+                    label: oldStep.label,
+                  );
+                } else {
+                  // Fallback
+                  assistantMessage.thoughtProcess!.add(
+                    StepDetail(
+                      stepType: 'tool_result',
+                      content: 'Finished ${chunk.tool}',
+                      label: chunk.toolLabel,
+                    ),
+                  );
+                }
+              } catch (e) {
+                print('Error updating thought process: $e');
+              }
+            }
+          } else if (chunk.type == 'actions') {
+            if (chunk.actions != null) {
+              assistantMessage.actions!.addAll(chunk.actions!);
+            }
+          } else if (chunk.type == 'error') {
+            messageBuffer.write('\n[Error: ${chunk.content}]');
+            assistantMessage.text = messageBuffer.toString();
+          }
+
+          // Force scroll to bottom
+          if (_scrollController.hasClients) {
+            _scrollController.jumpTo(
+              _scrollController.position.maxScrollExtent,
+            );
+          }
+        });
+      }
+
+      // Conversation history update
       _conversationHistory.add(ChatMessage(role: 'user', content: userMessage));
       _conversationHistory.add(
-        ChatMessage(role: 'model', content: response.message),
+        ChatMessage(role: 'model', content: assistantMessage.text),
       );
 
       setState(() {
         _isTyping = false;
-        _messages.add(_ChatMessage(text: response.message, isUser: false));
       });
     } catch (e) {
       setState(() {
         _isTyping = false;
-        _messages.add(_ChatMessage(text: 'Error connection', isUser: false));
+        _messages.add(
+          _ChatMessage(text: 'Error connection: $e', isUser: false),
+        );
       });
     }
   }
@@ -313,12 +484,15 @@ class _ChatScreenState extends State<ChatScreen> {
 }
 
 class _ChatMessage {
-  final String text;
+  String text;
   final bool isUser;
-  final bool showActionButtons;
+  List<ActionButton>? actions;
+  List<StepDetail>? thoughtProcess;
+
   _ChatMessage({
     required this.text,
     required this.isUser,
-    this.showActionButtons = false,
+    this.actions,
+    this.thoughtProcess,
   });
 }

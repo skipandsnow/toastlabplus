@@ -391,6 +391,16 @@ class ProfileScreen extends StatelessWidget {
               ),
               const Divider(),
 
+              // v0.1.7
+              _buildReleaseNote('v0.1.7', '2025-12-25', [
+                '🤖 Google ADK Runner 整合',
+                '⚡ HTTP Streaming (NDJSON) 即時回應',
+                '🧠 Thinking Process UI (思考過程透明化)',
+                '📝 Tool Description 中央化管理',
+                '👤 使用者身份同步 (Email + Name)',
+                '✨ 品牌名稱更新為 "ToastLab AI"',
+              ]),
+
               // v0.1.6
               _buildReleaseNote('v0.1.6', '2025-12-22', [
                 '✨ Google 登入 (Firebase Auth)',

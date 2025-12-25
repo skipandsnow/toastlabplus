@@ -1,6 +1,6 @@
 /// App version information
 class AppVersion {
-  static const String version = '0.1.6';
+  static const String version = '0.1.7';
   static const String buildNumber = '1';
   static const String fullVersion = '$version+$buildNumber';
 

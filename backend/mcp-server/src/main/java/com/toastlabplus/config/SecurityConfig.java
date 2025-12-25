@@ -40,6 +40,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/clubs").permitAll()
                         .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
+                        // MCP endpoints - allow for AI chat integration
+                        .requestMatchers("/mcp/**").permitAll()
                         // Admin endpoints - require PLATFORM_ADMIN role
                         .requestMatchers("/api/admin/**").hasRole("PLATFORM_ADMIN")
                         // All other endpoints require authentication

@@ -14,11 +14,19 @@ class AuthService extends ChangeNotifier {
   String? _token;
   Map<String, dynamic>? _member;
   bool _isLoading = false;
+  String? _sessionExpiredMessage; // Message to show when session expires
 
   String? get token => _token;
   Map<String, dynamic>? get member => _member;
   bool get isLoading => _isLoading;
   bool get isLoggedIn => _token != null;
+
+  /// Returns the session expired message and clears it (one-time read)
+  String? consumeSessionExpiredMessage() {
+    final msg = _sessionExpiredMessage;
+    _sessionExpiredMessage = null;
+    return msg;
+  }
 
   // Initialize - check for existing token and refresh member data
   Future<void> init() async {
@@ -60,11 +68,20 @@ class AuthService extends ChangeNotifier {
         await prefs.setString(_memberKey, json.encode(data));
 
         notifyListeners();
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        // Token expired - force logout and notify
+        await _handleSessionExpired();
       }
     } catch (e) {
       // Silently fail - use cached data if refresh fails
       debugPrint('Failed to refresh member data: $e');
     }
+  }
+
+  /// Handle session expiration - logout and set message
+  Future<void> _handleSessionExpired() async {
+    _sessionExpiredMessage = '登入已逾期，請重新登入';
+    await logout();
   }
 
   // Register new platform member

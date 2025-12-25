@@ -27,6 +27,7 @@ ToastLabPlus 是專為 Toastmasters 國際演講會設計的會議管理系統�
 | 📋 **模板管理** | 上傳 Excel 模板、AI 解析變數位置 |
 | ✏️ **會議編輯** | 編輯會議主題、Club Admin 可刪除會議 |
 | ⚙️ **排程編輯** | 編輯現有會議排程、動態生成月數選擇、刪除排程 |
+| 🤖 **ToastLab AI** | 自然語言會議助手 (ADK + Gemini)、即時串流回應、思考過程透明化 |
 
 ### 🚧 開發中 / 未來功能
 
@@ -132,6 +133,7 @@ toastlabplus/
 
 | 版本 | 日期 | 變更說明 |
 |------|------|----------|
+| **v0.1.7** (Release) | 2025-12-25 | **AI 助手強化**：Google ADK Runner 整合、HTTP Streaming (NDJSON) 即時回應、Thinking Process UI (可展開的思考過程)、Tool Description 中央化管理 (Java MCP → Python → Flutter)、使用者身份同步 (Email + Name)、品牌名稱更新為 "ToastLab AI" |
 | **v0.1.6** (Release) | 2025-12-22 | **會議管理與社交登入增強**：Google 登入 (Firebase Auth)、編輯會議主題、Admin 代理報名/取消、Meeting Schedule 刪除功能、Meetings 多選批量刪除、Profile 頁面 UI 簡化 |
 | **v0.1.5** (Release) | 2025-12-21 | **CI/CD 重整與系統優化**：GitHub Workflow 拆分為 5 個獨立手動觸發 (E2E/MCP Server/Chat Backend/iOS/Flutter Web)、JDK 25 升級、LibreOffice PDF 生成 Windows 相容修正、HikariCP 連線池限制、iOS share_plus 修正、MCP Server 記憶體調整至 1GB |
 | **v0.1.4** (Release) | 2025-12-19 | **Club Admin 管理與 UI 優化**：新增版本資訊與 Release Notes 頁面、登入頁面顯示版本與版權、修正未正確顯示當前 Club Admin、修正 Club 更新後 UI 未刷新問題、修正 Snackbar 重複顯示、修正 Remove Club Admin API 錯誤、Web metadata 更新 |

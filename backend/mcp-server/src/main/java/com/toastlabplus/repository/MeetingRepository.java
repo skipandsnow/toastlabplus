@@ -24,6 +24,12 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
 
     List<Meeting> findByClubIdAndMeetingDateBetween(Long clubId, LocalDate startDate, LocalDate endDate);
 
+    // For MCP tools - query meetings within date range
+    List<Meeting> findByMeetingDateBetweenOrderByMeetingDateAsc(LocalDate startDate, LocalDate endDate);
+
+    List<Meeting> findByClubIdAndMeetingDateBetweenOrderByMeetingDateAsc(Long clubId, LocalDate startDate,
+            LocalDate endDate);
+
     Optional<Meeting> findByIdAndClubId(Long id, Long clubId);
 
     List<Meeting> findByScheduleId(Long scheduleId);

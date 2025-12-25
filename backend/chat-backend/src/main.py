@@ -1,13 +1,22 @@
 import os
 import asyncio
 import subprocess
+import json
+import traceback
 from typing import Optional
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import google.generativeai as genai
+from google.generativeai.types import FunctionDeclaration, Tool
+
+# ADK imports
+from google.adk.runners import Runner
+from google.adk.sessions import InMemorySessionService
+from google.genai import types as genai_types
 
 # Load environment variables
 load_dotenv()
@@ -19,7 +28,14 @@ from src.config import (
     GEMINI_SECRET_NAME,
     CORS_ORIGINS,
     SYSTEM_PROMPT,
+    MCP_SERVER_URL,
 )
+
+# Import ADK Agent
+from src.agent import create_agent
+
+# Import MCP client (keep for backward compatibility)
+from src.mcp_client import McpClient, get_mcp_client, init_mcp_client
 
 
 def get_secret_from_gcp(secret_id: str) -> str:
@@ -35,7 +51,7 @@ def get_secret_from_gcp(secret_id: str) -> str:
             shell=True
         )
         if result.returncode == 0 and result.stdout.strip():
-            print(f"✅ Fetched {secret_id} using gcloud CLI")
+            print(f"[OK] Fetched {secret_id} using gcloud CLI")
             return result.stdout.strip()
         else:
             print(f"gcloud CLI returned: {result.stderr}")
@@ -49,7 +65,7 @@ def get_secret_from_gcp(secret_id: str) -> str:
         client = secretmanager.SecretManagerServiceClient()
         name = f"projects/{GCP_PROJECT_ID}/secrets/{secret_id}/versions/latest"
         response = client.access_secret_version(request={"name": name})
-        print(f"✅ Fetched {secret_id} using Secret Manager SDK")
+        print(f"[OK] Fetched {secret_id} using Secret Manager SDK")
         return response.payload.data.decode("UTF-8")
     except Exception as e:
         print(f"Secret Manager SDK method failed: {e}")
@@ -57,28 +73,91 @@ def get_secret_from_gcp(secret_id: str) -> str:
     # Method 3: Fallback to environment variable
     env_value = os.getenv(secret_id, "")
     if env_value:
-        print(f"✅ Using {secret_id} from environment variable")
+        print(f"[OK] Using {secret_id} from environment variable")
         return env_value
     
-    print(f"⚠️ Failed to fetch {secret_id} from any source")
+    print(f"[WARN] Failed to fetch {secret_id} from any source")
     return ""
 
 
 # Configure Gemini API
 GEMINI_API_KEY = get_secret_from_gcp(GEMINI_SECRET_NAME)
 if GEMINI_API_KEY:
+    # Set environment variable for ADK/google-genai SDK
+    os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
     genai.configure(api_key=GEMINI_API_KEY)
     masked_key = GEMINI_API_KEY[:10] + "..." + GEMINI_API_KEY[-4:] if len(GEMINI_API_KEY) > 14 else "***"
-    print(f"✅ Gemini API configured with key: {masked_key}")
-    print(f"📦 Using model: {GEMINI_MODEL_NAME}")
+    print(f"[OK] Gemini API configured with key: {masked_key}")
+    print(f"[MODEL] Using model: {GEMINI_MODEL_NAME}")
 else:
-    print("⚠️ No Gemini API key found")
+    print("[WARN] No Gemini API key found")
+
+
+# Global MCP client instance
+mcp_client: Optional[McpClient] = None
+
+# Global ADK Runner and Session Service
+adk_runner: Optional[Runner] = None
+session_service: Optional[InMemorySessionService] = None
+TOOL_DISPLAY_MAP: dict[str, str] = {}
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan - initialize ADK Runner on startup."""
+    global mcp_client, adk_runner, session_service
+    
+    # Initialize MCP client (for backward compatibility / health check)
+    print(f"[CONN] Connecting to MCP Server: {MCP_SERVER_URL}")
+    try:
+        mcp_client = await init_mcp_client(MCP_SERVER_URL)
+        tools = mcp_client.get_tools()
+        print(f"[OK] MCP Client connected with {len(tools)} tools")
+        
+        # Populate display map from descriptions
+        for tool in tools:
+            # Expected format: "[Friendly Name] Description..."
+            desc = tool.description or ""
+            if desc.startswith("[") and "]" in desc:
+                end_idx = desc.find("]")
+                friendly_name = desc[1:end_idx]
+                TOOL_DISPLAY_MAP[tool.name] = friendly_name
+                print(f"[TOOL] Map {tool.name} -> {friendly_name}")
+            else:
+                TOOL_DISPLAY_MAP[tool.name] = tool.name
+    except Exception as e:
+        print(f"[WARN] MCP Client initialization failed: {e}")
+        mcp_client = None
+    
+    # Initialize ADK Runner
+    try:
+        print("[ADK] Initializing ADK Agent and Runner...")
+        agent = create_agent()
+        session_service = InMemorySessionService()
+        adk_runner = Runner(
+            agent=agent,
+            app_name="toastlabplus",
+            session_service=session_service
+        )
+        print("[OK] ADK Runner initialized successfully")
+    except Exception as e:
+        print(f"[WARN] ADK Runner initialization failed: {e}")
+        import traceback
+        traceback.print_exc()
+        adk_runner = None
+    
+    yield
+    
+    # Cleanup
+    if mcp_client:
+        await mcp_client.close()
 
 
 app = FastAPI(
     title="Toastlabplus Chat Backend",
-    description="Chat Backend with Gemini AI integration for Toastmasters meeting assistance",
-    version="0.1.5"
+    description="Chat Backend with Gemini AI + MCP integration for Toastmasters meeting assistance",
+    version="0.2.0",
+    lifespan=lifespan
 )
 
 app.add_middleware(
@@ -90,14 +169,31 @@ app.add_middleware(
 )
 
 
+class ActionButton(BaseModel):
+    """Interactive action button for chat responses."""
+    id: str
+    label: str
+    action_type: str  # "signup_role", "view_meeting", etc.
+    payload: dict
+
+
 class ChatRequest(BaseModel):
     message: str
     conversation_history: Optional[list] = None
+    user_email: Optional[str] = None  # For signup actions
+    user_name: Optional[str] = None
+
+
+class StepDetail(BaseModel):
+    step_type: str  # "tool_call", "tool_result", "thought"
+    content: str    # Detailed content or JSON string
 
 
 class ChatResponse(BaseModel):
     response: str
     model: str
+    actions: Optional[list[ActionButton]] = None
+    thought_process: Optional[list[StepDetail]] = None
 
 
 @app.get("/")
@@ -107,50 +203,138 @@ async def root():
 
 @app.get("/health")
 async def health():
+    mcp_tools_count = len(mcp_client.get_tools()) if mcp_client else 0
     return {
         "status": "healthy",
         "gemini_configured": bool(GEMINI_API_KEY),
         "model": GEMINI_MODEL_NAME,
-        "gcp_project": GCP_PROJECT_ID
+        "gcp_project": GCP_PROJECT_ID,
+        "mcp_server": MCP_SERVER_URL,
+        "mcp_connected": mcp_client is not None,
+        "mcp_tools_count": mcp_tools_count,
+        "adk_runner": adk_runner is not None
     }
 
 
-@app.post("/chat", response_model=ChatResponse)
+@app.post("/chat")
 async def chat(request: ChatRequest):
     """
-    Send a message to Gemini AI and get a response.
+    Chat endpoint using ADK Runner with Streaming Response (NDJSON).
     """
-    if not GEMINI_API_KEY:
-        raise HTTPException(status_code=500, detail="Gemini API key not configured")
-
+    if not adk_runner:
+        raise HTTPException(status_code=503, detail="ADK Runner not initialized")
+    
+    # User Context from Request
+    user_email = request.user_email or "unknown_user"
+    user_id = user_email
+    session_id = f"session_{user_id}"
+    
+    # 確保 session 存在
     try:
-        model = genai.GenerativeModel(
-            model_name=GEMINI_MODEL_NAME,
-            system_instruction=SYSTEM_PROMPT
+        session = await session_service.get_session(
+            app_name="toastlabplus",
+            user_id=user_id,
+            session_id=session_id
         )
-
-        # Build conversation history if provided
-        history = []
-        if request.conversation_history:
-            for msg in request.conversation_history:
-                history.append({
-                    "role": msg.get("role", "user"),
-                    "parts": [msg.get("content", "")]
-                })
-
-        chat_session = model.start_chat(history=history)
-        response = chat_session.send_message(request.message)
-
-        return ChatResponse(
-            response=response.text,
-            model=GEMINI_MODEL_NAME
-        )
-
+        if not session:
+            await session_service.create_session(
+                app_name="toastlabplus",
+                user_id=user_id,
+                session_id=session_id
+            )
     except Exception as e:
-        import traceback
-        error_detail = f"{type(e).__name__}: {str(e)}"
-        print(f"Error in chat: {error_detail}")
-        raise HTTPException(status_code=500, detail=error_detail)
+        print(f"[WARN] Session check failed: {e}")
+
+    # Process message history (optional: ADK handles history in session usually)
+    # But for a stateless REST API view, we usually just pass the new message
+    user_name = request.user_name or "Unknown"
+    message_content = genai_types.Content(parts=[
+        genai_types.Part(text=f"User: {request.message}\nUser Email: {user_email}\nUser Name: {user_name}")
+    ])
+    
+    async def event_generator():
+        print(f"[ADK] Streaming agent for user: {user_id}")
+        
+        # Keep track of actions to send at the end
+        accumulated_actions = []
+        
+        try:
+            async for event in adk_runner.run_async(
+                user_id=user_id,
+                session_id=session_id,
+                new_message=message_content
+            ):
+                if event.content and event.content.parts:
+                    for part in event.content.parts:
+                        # 1. Text Content
+                        if hasattr(part, 'text') and part.text:
+                            yield json.dumps({
+                                "type": "text", 
+                                "content": part.text
+                            }, ensure_ascii=False) + "\n"
+                        
+                        # 2. Tool Calls
+                        if hasattr(part, 'function_call') and part.function_call:
+                            fc = part.function_call
+                            
+                            # Look up display label
+                            tool_label = TOOL_DISPLAY_MAP.get(fc.name, fc.name)
+                            
+                            yield json.dumps({
+                                "type": "thought_start",
+                                "tool": fc.name,
+                                "tool_label": tool_label,
+                                "args": dict(fc.args) if fc.args else {}
+                            }, ensure_ascii=False) + "\n"
+                        
+                        # 3. Tool Results
+                        if hasattr(part, 'function_response') and part.function_response:
+                            fr = part.function_response
+                            
+                            # Truncate long results for frontend display
+                            result_str = str(fr.response)
+                            if len(result_str) > 100:
+                                result_str = result_str[:100] + "..."
+                            
+                            yield json.dumps({
+                                "type": "thought_end",
+                                "tool": fr.name,
+                                "result": result_str
+                            }, ensure_ascii=False) + "\n"
+                            
+                            # Special logic for generating buttons
+                            if fr.name == "get_role_slots":
+                                try:
+                                    result = fr.response
+                                    slots = json.loads(result) if isinstance(result, str) else result
+                                    if isinstance(slots, list):
+                                        available_slots = [s for s in slots if not s.get("isAssigned")]
+                                        for slot in available_slots[:5]:
+                                            accumulated_actions.append({
+                                                "id": f"signup_{slot['id']}",
+                                                "label": f"報名 {slot['displayName']}",
+                                                "action_type": "signup_role",
+                                                "payload": {
+                                                    "meetingId": slot.get("meetingId"),
+                                                    "roleSlotId": slot["id"],
+                                                    "roleName": slot["displayName"]
+                                                }
+                                            })
+                                except Exception as e:
+                                    print(f"[WARN] Error parsing buttons: {e}")
+
+            # End of stream, send actions if any
+            if accumulated_actions:
+                yield json.dumps({
+                    "type": "actions",
+                    "data": accumulated_actions
+                }, ensure_ascii=False) + "\n"
+                
+        except Exception as e:
+            print(f"[ERROR] Stream error: {e}")
+            yield json.dumps({"type": "error", "content": str(e)}) + "\n"
+
+    return StreamingResponse(event_generator(), media_type="application/x-ndjson")
 
 
 @app.get("/chat/stream")

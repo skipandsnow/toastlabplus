@@ -18,6 +18,32 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   String? _errorMessage;
+  bool _checkedSessionExpired = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Check for session expired message once
+    if (!_checkedSessionExpired) {
+      _checkedSessionExpired = true;
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final expiredMsg = authService.consumeSessionExpiredMessage();
+      if (expiredMsg != null) {
+        // Show snackbar after frame is built
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(expiredMsg),
+                backgroundColor: Colors.orange.shade700,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+        });
+      }
+    }
+  }
 
   @override
   void dispose() {

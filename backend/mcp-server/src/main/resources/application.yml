@@ -4,6 +4,12 @@ server:
 spring:
   application:
     name: toastlabplus-mcp-server
+    version: 0.1.7
+
+  info:
+    app:
+      name: ToastLabPlus MCP Server
+      version: 0.1.7
 
   datasource:
     url: jdbc:postgresql://${DB_HOST:34.80.127.183}:5432/${DB_NAME:toastlabplus}?useUnicode=true&characterEncoding=UTF-8
@@ -56,3 +62,11 @@ logging:
     root: INFO
     com.toastlabplus: DEBUG
     org.springframework.security: DEBUG
+
+# Spring AI MCP Server Configuration (Streamable HTTP)
+spring.ai.mcp.server:
+  name: toastlabplus-mcp-server
+  version: 0.1.6
+  type: SYNC
+  protocol: STREAMABLE
+  base-url: /mcp

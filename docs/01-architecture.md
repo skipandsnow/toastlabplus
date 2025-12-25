@@ -9,8 +9,8 @@
 本系統採用前後端分離架構，以 Google Cloud Platform 為核心雲端平台。
 
 **核心組件**:
-- **Client Side**: 使用 Flutter 建構跨平台 App，包含標準 UI 操作介面與 In-App Chat 聊天介面
-- **AI Service**: 透過 Google Generative AI SDK 建構 Chat Backend，連接 Gemini Developer API，負責理解用戶自然語言指令並調度 MCP Server
+- **Client Side**: 使用 Flutter 建構跨平台 App，包含標準 UI 操作介面與 ToastLab AI 聊天介面
+- **AI Service**: 透過 Google Agent Development Kit (ADK) 建構 Chat Backend，整合 Gemini API 與 MCP 工具，支援 NDJSON 串流回應與思考過程透明化
 - **Core Backend**: Spring Boot MCP Server 作為核心資料服務，處理所有業務邏輯與資料庫存取
 - **Database**: 使用 Cloud SQL (PostgreSQL)，兼顧效能與成本效益
 
@@ -20,7 +20,7 @@
 flowchart TB
     subgraph ClientSide ["Client Side (Flutter App)"]
         UI["UI Screens"]
-        ChatUI["In-App Chat UI"]
+        ChatUI["ToastLab AI<br/>In-App Chat UI"]
         State["State Management<br/>Provider"]
     end
     
@@ -30,7 +30,7 @@ flowchart TB
     
     subgraph GCP ["Google Cloud Platform"]
         subgraph CloudRun ["Cloud Run"]
-            ChatBackend["Chat Backend<br/>Generative AI SDK"]
+            ChatBackend["Chat Backend<br/>ADK Runner + FastAPI"]
             MCP["MCP Server<br/>Spring Boot"]
         end
         
@@ -38,7 +38,7 @@ flowchart TB
     end
     
     UI -->|"REST API"| MCP
-    ChatUI -->|"SSE Stream"| ChatBackend
+    ChatUI -->|"HTTP Streaming<br/>(NDJSON)"| ChatBackend
     ChatBackend -->|"Gemini API"| GeminiAPI
     ChatBackend -->|"MCP Protocol"| MCP
     MCP -->|"JPA / SQL"| DB
