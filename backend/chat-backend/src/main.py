@@ -81,6 +81,7 @@ def get_secret_from_gcp(secret_id: str) -> str:
 
 
 # Configure Gemini SDK Client
+GEMINI_API_KEY = get_secret_from_gcp(GEMINI_SECRET_NAME)
 genai_client = None
 if GEMINI_API_KEY:
     os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
