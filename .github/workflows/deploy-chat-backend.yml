@@ -5,135 +5,135 @@
 name: Deploy Chat Backend
 
 on:
-    workflow_dispatch:
-        inputs:
-            environment:
-                description: "部署環境"
-                required: true
-                default: "staging"
-                type: choice
-                options:
-                    - staging
-                    - production
-    workflow_call:
-        inputs:
-            environment:
-                description: "部署環境"
-                required: true
-                type: string
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "部署環境"
+        required: true
+        default: "production"
+        type: choice
+        options:
+          - staging
+          - production
+  workflow_call:
+    inputs:
+      environment:
+        description: "部署環境"
+        required: true
+        type: string
 
 env:
-    PROJECT_ID: toastlabplus
-    GAR_LOCATION: asia-east1
-    GAR_REPOSITORY: toastlabplus-repo
-    CLOUD_RUN_REGION: asia-east1
-    WORKLOAD_IDENTITY_PROVIDER: projects/96030530148/locations/global/workloadIdentityPools/github-pool/providers/github-provider
-    SERVICE_ACCOUNT: github-actions@toastlabplus.iam.gserviceaccount.com
-    GEMINI_API_KEY_SECRET: GEMINI_API_KEY
+  PROJECT_ID: toastlabplus
+  GAR_LOCATION: asia-east1
+  GAR_REPOSITORY: toastlabplus-repo
+  CLOUD_RUN_REGION: asia-east1
+  WORKLOAD_IDENTITY_PROVIDER: projects/96030530148/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+  SERVICE_ACCOUNT: github-actions@toastlabplus.iam.gserviceaccount.com
+  GEMINI_API_KEY_SECRET: GEMINI_API_KEY
 
 jobs:
-    build:
-        name: Build Chat Backend
-        runs-on: ubuntu-latest
-        permissions:
-            contents: read
-            id-token: write
+  build:
+    name: Build Chat Backend
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
-        steps:
-            - name: Authenticate to Google Cloud
-              id: auth
-              uses: google-github-actions/auth@v2
-              with:
-                  workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
-                  service_account: ${{ env.SERVICE_ACCOUNT }}
-                  token_format: access_token
+    steps:
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
+          token_format: access_token
 
-            - name: Set up Cloud SDK
-              uses: google-github-actions/setup-gcloud@v2
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
 
-            - name: Check if image already exists
-              id: check-image
-              run: |
-                  if gcloud artifacts docker images describe ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/chat-backend:${{ github.sha }} > /dev/null 2>&1; then
-                    echo "Image already exists, skipping build"
-                    echo "exists=true" >> $GITHUB_OUTPUT
-                  else
-                    echo "Image not found, will build"
-                    echo "exists=false" >> $GITHUB_OUTPUT
-                  fi
+      - name: Check if image already exists
+        id: check-image
+        run: |
+          if gcloud artifacts docker images describe ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/chat-backend:${{ github.sha }} > /dev/null 2>&1; then
+            echo "Image already exists, skipping build"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "Image not found, will build"
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
 
-            - name: Checkout
-              if: steps.check-image.outputs.exists == 'false'
-              uses: actions/checkout@v4
+      - name: Checkout
+        if: steps.check-image.outputs.exists == 'false'
+        uses: actions/checkout@v4
 
-            - name: Configure Docker for Artifact Registry
-              if: steps.check-image.outputs.exists == 'false'
-              run: |
-                  echo '${{ steps.auth.outputs.access_token }}' | docker login -u oauth2accesstoken --password-stdin https://${{ env.GAR_LOCATION }}-docker.pkg.dev
+      - name: Configure Docker for Artifact Registry
+        if: steps.check-image.outputs.exists == 'false'
+        run: |
+          echo '${{ steps.auth.outputs.access_token }}' | docker login -u oauth2accesstoken --password-stdin https://${{ env.GAR_LOCATION }}-docker.pkg.dev
 
-            - name: Build and Push Docker Image
-              if: steps.check-image.outputs.exists == 'false'
-              working-directory: ./backend/chat-backend
-              run: |
-                  docker build -t ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/chat-backend:${{ github.sha }} .
-                  docker build -t ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/chat-backend:latest .
-                  docker push ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/chat-backend:${{ github.sha }}
-                  docker push ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/chat-backend:latest
+      - name: Build and Push Docker Image
+        if: steps.check-image.outputs.exists == 'false'
+        working-directory: ./backend/chat-backend
+        run: |
+          docker build -t ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/chat-backend:${{ github.sha }} .
+          docker build -t ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/chat-backend:latest .
+          docker push ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/chat-backend:${{ github.sha }}
+          docker push ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/chat-backend:latest
 
-    deploy:
-        name: Deploy to ${{ inputs.environment || github.event.inputs.environment }}
-        needs: build
-        runs-on: ubuntu-latest
-        environment: ${{ inputs.environment || github.event.inputs.environment }}
-        permissions:
-            contents: read
-            id-token: write
+  deploy:
+    name: Deploy to ${{ inputs.environment || github.event.inputs.environment }}
+    needs: build
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || github.event.inputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
 
-        steps:
-            - name: Authenticate to Google Cloud
-              uses: google-github-actions/auth@v2
-              with:
-                  workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
-                  service_account: ${{ env.SERVICE_ACCOUNT }}
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.SERVICE_ACCOUNT }}
 
-            - name: Set up Cloud SDK
-              uses: google-github-actions/setup-gcloud@v2
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
 
-            - name: Deploy to Staging
-              if: inputs.environment == 'staging' || github.event.inputs.environment == 'staging'
-              run: |
-                  gcloud run deploy chat-backend-staging \
-                    --image=${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/chat-backend:${{ github.sha }} \
-                    --region=${{ env.CLOUD_RUN_REGION }} \
-                    --cpu=1 \
-                    --memory=512Mi \
-                    --min-instances=0 \
-                    --max-instances=3 \
-                    --set-secrets="GEMINI_API_KEY=${{ env.GEMINI_API_KEY_SECRET }}:latest" \
-                    --set-env-vars="ENVIRONMENT=staging,GCP_PROJECT_ID=${{ env.PROJECT_ID }}" \
-                    --allow-unauthenticated
+      - name: Deploy to Staging
+        if: inputs.environment == 'staging' || github.event.inputs.environment == 'staging'
+        run: |
+          gcloud run deploy chat-backend-staging \
+            --image=${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/chat-backend:${{ github.sha }} \
+            --region=${{ env.CLOUD_RUN_REGION }} \
+            --cpu=1 \
+            --memory=512Mi \
+            --min-instances=0 \
+            --max-instances=3 \
+            --set-secrets="GEMINI_API_KEY=${{ env.GEMINI_API_KEY_SECRET }}:latest" \
+            --set-env-vars="ENVIRONMENT=staging,GCP_PROJECT_ID=${{ env.PROJECT_ID }}" \
+            --allow-unauthenticated
 
-            - name: Deploy to Production
-              if: inputs.environment == 'production' || github.event.inputs.environment == 'production'
-              run: |
-                  gcloud run deploy chat-backend \
-                    --image=${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/chat-backend:${{ github.sha }} \
-                    --region=${{ env.CLOUD_RUN_REGION }} \
-                    --cpu=1 \
-                    --memory=512Mi \
-                    --min-instances=1 \
-                    --max-instances=10 \
-                    --set-secrets="GEMINI_API_KEY=${{ env.GEMINI_API_KEY_SECRET }}:latest" \
-                    --set-env-vars="ENVIRONMENT=production,GCP_PROJECT_ID=${{ env.PROJECT_ID }}" \
-                    --allow-unauthenticated
+      - name: Deploy to Production
+        if: inputs.environment == 'production' || github.event.inputs.environment == 'production'
+        run: |
+          gcloud run deploy chat-backend \
+            --image=${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/chat-backend:${{ github.sha }} \
+            --region=${{ env.CLOUD_RUN_REGION }} \
+            --cpu=1 \
+            --memory=512Mi \
+            --min-instances=1 \
+            --max-instances=10 \
+            --set-secrets="GEMINI_API_KEY=${{ env.GEMINI_API_KEY_SECRET }}:latest" \
+            --set-env-vars="ENVIRONMENT=production,GCP_PROJECT_ID=${{ env.PROJECT_ID }}" \
+            --allow-unauthenticated
 
-            - name: Summary
-              run: |
-                  ENV="${{ inputs.environment || github.event.inputs.environment }}"
-                  if [ "$ENV" == "staging" ]; then
-                    SERVICE_NAME="chat-backend-staging"
-                  else
-                    SERVICE_NAME="chat-backend"
-                  fi
-                  echo "## 🚀 Chat Backend Deployed ($ENV)" >> $GITHUB_STEP_SUMMARY
-                  echo "- URL: $(gcloud run services describe $SERVICE_NAME --region=${{ env.CLOUD_RUN_REGION }} --format='value(status.url)')" >> $GITHUB_STEP_SUMMARY
+      - name: Summary
+        run: |
+          ENV="${{ inputs.environment || github.event.inputs.environment }}"
+          if [ "$ENV" == "staging" ]; then
+            SERVICE_NAME="chat-backend-staging"
+          else
+            SERVICE_NAME="chat-backend"
+          fi
+          echo "## 🚀 Chat Backend Deployed ($ENV)" >> $GITHUB_STEP_SUMMARY
+          echo "- URL: $(gcloud run services describe $SERVICE_NAME --region=${{ env.CLOUD_RUN_REGION }} --format='value(status.url)')" >> $GITHUB_STEP_SUMMARY

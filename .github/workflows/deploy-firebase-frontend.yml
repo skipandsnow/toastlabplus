@@ -10,7 +10,7 @@ on:
       environment:
         description: "部署環境"
         required: true
-        default: "staging"
+        default: "production"
         type: choice
         options:
           - staging
