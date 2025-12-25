@@ -10,8 +10,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
-import google.generativeai as genai
-from google.generativeai.types import FunctionDeclaration, Tool
+from google import genai
+from google.genai import types as genai_types
 
 # ADK imports
 from google.adk.runners import Runner
@@ -80,12 +80,13 @@ def get_secret_from_gcp(secret_id: str) -> str:
     return ""
 
 
-# Configure Gemini API
-GEMINI_API_KEY = get_secret_from_gcp(GEMINI_SECRET_NAME)
+# Configure Gemini SDK Client
+genai_client = None
 if GEMINI_API_KEY:
-    # Set environment variable for ADK/google-genai SDK
     os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
-    genai.configure(api_key=GEMINI_API_KEY)
+    # Initialize the modern Gemini Client
+    genai_client = genai.Client(api_key=GEMINI_API_KEY)
+    
     masked_key = GEMINI_API_KEY[:10] + "..." + GEMINI_API_KEY[-4:] if len(GEMINI_API_KEY) > 14 else "***"
     print(f"[OK] Gemini API configured with key: {masked_key}")
     print(f"[MODEL] Using model: {GEMINI_MODEL_NAME}")
@@ -347,20 +348,23 @@ async def chat_stream(message: str = Query(..., description="The message to send
 
     async def generate():
         try:
-            model = genai.GenerativeModel(
-                model_name=GEMINI_MODEL_NAME,
-                system_instruction=SYSTEM_PROMPT
-            )
+            # Use the global genai_client
+            if not genai_client:
+                yield "data: Error: Client not initialized\n\n"
+                return
 
-            response = model.generate_content(
-                message,
-                stream=True
+            response = genai_client.models.generate_content_stream(
+                model=GEMINI_MODEL_NAME,
+                contents=message,
+                config=genai_types.GenerateContentConfig(
+                    system_instruction=SYSTEM_PROMPT
+                )
             )
 
             for chunk in response:
                 if chunk.text:
                     yield f"data: {chunk.text}\n\n"
-                    await asyncio.sleep(0.01)
+                    # await asyncio.sleep(0.01) # Usually not needed with this SDK
 
             yield "data: [DONE]\n\n"
 
@@ -389,10 +393,9 @@ async def generate_agenda(
         raise HTTPException(status_code=500, detail="Gemini API key not configured")
 
     try:
-        model = genai.GenerativeModel(
-            model_name=GEMINI_MODEL_NAME,
-            system_instruction="You are a Toastmasters meeting agenda generator. Generate structured meeting agendas in JSON format."
-        )
+        # Use the global genai_client
+        if not genai_client:
+            raise HTTPException(status_code=500, detail="Gemini Client not initialized")
 
         prompt = f"""Generate a Toastmasters meeting agenda with the following parameters:
 - Theme: {meeting_theme}
@@ -415,7 +418,13 @@ Return the agenda in JSON format with the following structure:
 
 Include typical Toastmasters segments: Opening, Word of the Day, Table Topics, Prepared Speeches, Evaluations, Reports, and Closing."""
 
-        response = model.generate_content(prompt)
+        response = genai_client.models.generate_content(
+            model=GEMINI_MODEL_NAME,
+            contents=prompt,
+            config=genai_types.GenerateContentConfig(
+                system_instruction="You are a Toastmasters meeting agenda generator. Generate structured meeting agendas in JSON format."
+            )
+        )
 
         return {
             "agenda": response.text,
@@ -450,19 +459,9 @@ async def parse_template(request: ParseTemplateRequest):
         raise HTTPException(status_code=500, detail="Gemini API key not configured")
 
     try:
-        model = genai.GenerativeModel(
-            model_name=GEMINI_MODEL_NAME,
-            system_instruction="""You are a Toastmasters meeting agenda template parser.
-Your job is to analyze Excel template content with coordinates and identify:
-1. Where each role's name should be filled (row and column)
-2. Role slots and their positions
-3. Variables like date, theme, meeting number
-
-The Excel content is in format: [R行,C列] Content
-You must identify which cells contain ROLE LABELS and which adjacent cells should contain the PERSON NAME.
-
-Always respond in valid JSON format."""
-        )
+        # Use the global genai_client
+        if not genai_client:
+            raise HTTPException(status_code=500, detail="Gemini Client not initialized")
 
         prompt = f"""分析這個 Toastmasters 會議 Agenda Excel 模板。
 模板內容有座標格式：[R行,C列] 內容
@@ -527,7 +526,22 @@ Always respond in valid JSON format."""
 
 請只回傳 JSON，不要其他文字。"""
 
-        response = model.generate_content(prompt)
+        response = genai_client.models.generate_content(
+            model=GEMINI_MODEL_NAME,
+            contents=prompt,
+            config=genai_types.GenerateContentConfig(
+                system_instruction="""You are a Toastmasters meeting agenda template parser.
+Your job is to analyze Excel template content with coordinates and identify:
+1. Where each role's name should be filled (row and column)
+2. Role slots and their positions
+3. Variables like date, theme, meeting number
+
+The Excel content is in format: [R行,C列] Content
+You must identify which cells contain ROLE LABELS and which adjacent cells should contain the PERSON NAME.
+
+Always respond in valid JSON format."""
+            )
+        )
         raw_text = response.text.strip()
 
         # Try to parse the JSON response
