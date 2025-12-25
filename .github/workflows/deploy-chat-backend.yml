@@ -99,6 +99,28 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Get MCP Server URL
+        id: get-mcp-url
+        run: |
+          ENV="${{ inputs.environment || github.event.inputs.environment }}"
+          if [ "$ENV" == "staging" ]; then
+            SERVICE_NAME="mcp-server-staging"
+          else
+            SERVICE_NAME="mcp-server"
+          fi
+
+          echo "Fetching URL for service: $SERVICE_NAME"
+          # Get the URL of the deployed MCP Server
+          MCP_URL=$(gcloud run services describe $SERVICE_NAME --region=${{ env.CLOUD_RUN_REGION }} --format='value(status.url)')
+
+          if [ -z "$MCP_URL" ]; then
+            echo "::error::Could not find URL for $SERVICE_NAME. Ensure MCP Server is deployed first."
+            exit 1
+          fi
+
+          echo "Found MCP Server URL: $MCP_URL"
+          echo "mcp_url=$MCP_URL" >> $GITHUB_OUTPUT
+
       - name: Deploy to Staging
         if: inputs.environment == 'staging' || github.event.inputs.environment == 'staging'
         run: |
@@ -110,7 +132,7 @@ jobs:
             --min-instances=0 \
             --max-instances=3 \
             --set-secrets="GEMINI_API_KEY=${{ env.GEMINI_API_KEY_SECRET }}:latest" \
-            --set-env-vars="ENVIRONMENT=staging,GCP_PROJECT_ID=${{ env.PROJECT_ID }}" \
+            --set-env-vars="ENVIRONMENT=staging,GCP_PROJECT_ID=${{ env.PROJECT_ID }},MCP_SERVER_URL=${{ steps.get-mcp-url.outputs.mcp_url }}" \
             --allow-unauthenticated
 
       - name: Deploy to Production
@@ -124,7 +146,7 @@ jobs:
             --min-instances=1 \
             --max-instances=10 \
             --set-secrets="GEMINI_API_KEY=${{ env.GEMINI_API_KEY_SECRET }}:latest" \
-            --set-env-vars="ENVIRONMENT=production,GCP_PROJECT_ID=${{ env.PROJECT_ID }}" \
+            --set-env-vars="ENVIRONMENT=production,GCP_PROJECT_ID=${{ env.PROJECT_ID }},MCP_SERVER_URL=${{ steps.get-mcp-url.outputs.mcp_url }}" \
             --allow-unauthenticated
 
       - name: Summary
