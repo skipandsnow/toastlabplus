@@ -14,7 +14,7 @@ spring:
   datasource:
     url: jdbc:postgresql://${DB_HOST:34.80.127.183}:5432/${DB_NAME:toastlabplus}?useUnicode=true&characterEncoding=UTF-8
     username: ${DB_USER:postgres}
-    password: ${DB_PASSWORD:1qaz@WSX}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -48,14 +48,13 @@ gcp:
     bucket-name: ${GCP_BUCKET_NAME:toastlabplus-avatars}
 
 jwt:
-  secret: ${JWT_SECRET:your-256-bit-secret-key-change-in-production-please}
+  secret: ${JWT_SECRET}
   expiration: 86400000 # 24 hours in milliseconds
 
-# TODO: 生產環境移除預設值，改用環境變數
 app:
   admin:
     email: ${ADMIN_EMAIL:admin@toastlabplus.com}
-    password: ${ADMIN_PASSWORD:Admin@123}
+    password: ${ADMIN_PASSWORD}
 
 logging:
   level:
