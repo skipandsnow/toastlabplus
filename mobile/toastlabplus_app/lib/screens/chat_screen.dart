@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../theme/app_theme.dart';
 import '../services/chat_service.dart';
@@ -19,7 +20,8 @@ class _ChatScreenState extends State<ChatScreen> {
   final ChatService _chatService = ChatService();
   final List<_ChatMessage> _messages = [
     _ChatMessage(
-      text: '您好！我是 Toastmasters 會議助手，可以幫您查詢會議、分會資訊，或報名角色。請問有什麼可以幫您的嗎？',
+      text:
+          'Hello! I am your Toastmasters meeting assistant.\n\nI can help you with:\n• Finding clubs, meetings, and officers\n• Signing up for roles or checking your schedule\n• Viewing member stats and participation\n• Searching the web for Toastmasters info\n\nHow can I help you today?',
       isUser: false,
     ),
   ];
@@ -32,12 +34,18 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       backgroundColor: AppTheme.ricePaper,
       appBar: AppBar(
-        title: Text(
-          'ToastLab AI',
-          style: TextStyle(
-            color: AppTheme.darkWood,
-            fontWeight: FontWeight.bold,
-          ),
+        title: Column(
+          children: [
+            Text(
+              'ToastLab AI',
+              style: TextStyle(
+                color: AppTheme.darkWood,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 2),
+            const _ClockWidget(),
+          ],
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
@@ -495,4 +503,43 @@ class _ChatMessage {
     this.actions,
     this.thoughtProcess,
   });
+}
+
+class _ClockWidget extends StatefulWidget {
+  const _ClockWidget();
+
+  @override
+  State<_ClockWidget> createState() => _ClockWidgetState();
+}
+
+class _ClockWidgetState extends State<_ClockWidget> {
+  late final Stream<DateTime> _timerStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _timerStream = Stream.periodic(
+      const Duration(seconds: 1),
+      (_) => DateTime.now(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DateTime>(
+      stream: _timerStream,
+      initialData: DateTime.now(),
+      builder: (context, snapshot) {
+        final timeString = DateFormat('HH:mm').format(snapshot.data!);
+        return Text(
+          timeString,
+          style: TextStyle(
+            color: AppTheme.lightWood.withValues(alpha: 0.8),
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        );
+      },
+    );
+  }
 }

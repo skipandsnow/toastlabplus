@@ -18,13 +18,13 @@
 
 包含主要功能入口（Make Agenda）與快速導航。
 
-![Home Screen](../images/ui_home_mockup_1764873232723.png)
+![Home Screen](./images/ui_home_actual.png)
 
 ## 11.2 使用者註冊
 
 身份選擇畫面，提供 Guest（來賓）與 Member（會員）兩種選項。
 
-![Registration Flow](../images/ui_registration_flow.png)
+![Registration Flow](./images/ui_login_actual.png)
 
 ## 11.3 會員審核
 
@@ -36,7 +36,7 @@ Club Admin 專用畫面，審核待加入的會員申請。
 
 顯示即將舉行的會議清單，包含報名進度與狀態。
 
-![Meeting List](../images/ui_meeting_list.png)
+![Meeting List](./images/ui_meeting_list_actual.png)
 
 ## 11.5 角色報名
 
@@ -72,7 +72,7 @@ App 內通知列表，顯示未讀通知與歷史記錄。
 
 對話式操作介面，支援互動式按鈕以簡化確認流程。
 
-![Chat](../images/ui_chat.png)
+![Chat](./images/ui_chat_actual.png)
 
 ## 11.11 Club Public Screen
 

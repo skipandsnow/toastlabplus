@@ -13,7 +13,7 @@
 
     <groupId>com.toastlabplus</groupId>
     <artifactId>mcp-server</artifactId>
-    <version>0.1.7</version>
+    <version>0.1.8</version>
     <name>Toastlabplus MCP Server</name>
     <description>MCP Server for Toastlabplus - Meeting Management API</description>
 
@@ -110,6 +110,12 @@
             <artifactId>spring-cloud-gcp-starter-storage</artifactId>
         </dependency>
 
+        <!-- Google Cloud Secret Manager (Native Client) -->
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-secretmanager</artifactId>
+        </dependency>
+
         <!-- Apache POI for Excel processing -->
         <dependency>
             <groupId>org.apache.poi</groupId>
@@ -128,12 +134,7 @@
             <artifactId>jdbc-socket-factory-core</artifactId>
             <version>1.21.2</version>
         </dependency>
-        <!-- Override google-auth-library version for Cloud SQL connector compatibility -->
-        <dependency>
-            <groupId>com.google.auth</groupId>
-            <artifactId>google-auth-library-oauth2-http</artifactId>
-            <version>1.30.0</version>
-        </dependency>
+
     </dependencies>
 
     <dependencyManagement>
@@ -149,7 +150,7 @@
             <dependency>
                 <groupId>com.google.cloud</groupId>
                 <artifactId>spring-cloud-gcp-dependencies</artifactId>
-                <version>5.8.0</version>
+                <version>7.4.2</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

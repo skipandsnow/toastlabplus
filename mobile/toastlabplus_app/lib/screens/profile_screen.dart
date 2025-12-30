@@ -391,6 +391,15 @@ class ProfileScreen extends StatelessWidget {
               ),
               const Divider(),
 
+              // v0.1.8
+              _buildReleaseNote('v0.1.8', '2025-12-31', [
+                '🔐 TAVILY_API_KEY Secret Manager 整合',
+                '⏰ Chat 畫面新增即時時鐘 (HH:mm)',
+                '🌐 預設歡迎訊息英文化與功能摘要',
+                '📋 web_search tool console logging',
+                '📸 UI 文件更新為實際截圖',
+              ]),
+
               // v0.1.7
               _buildReleaseNote('v0.1.7', '2025-12-25', [
                 '🤖 Google ADK Runner 整合',

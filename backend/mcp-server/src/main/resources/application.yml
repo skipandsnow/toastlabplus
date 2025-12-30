@@ -4,12 +4,12 @@ server:
 spring:
   application:
     name: toastlabplus-mcp-server
-    version: 0.1.7
+    version: 0.1.8
 
   info:
     app:
       name: ToastLabPlus MCP Server
-      version: 0.1.7
+      version: 0.1.8
 
   datasource:
     url: jdbc:postgresql://${DB_HOST:34.80.127.183}:5432/${DB_NAME:toastlabplus}?useUnicode=true&characterEncoding=UTF-8
@@ -66,7 +66,13 @@ logging:
 # Spring AI MCP Server Configuration (Streamable HTTP)
 spring.ai.mcp.server:
   name: toastlabplus-mcp-server
-  version: 0.1.6
+  version: 0.1.8
   type: SYNC
   protocol: STREAMABLE
   base-url: /mcp
+
+# Tavily Web Search API
+tavily:
+  api:
+    key: ${TAVILY_API_KEY}
+    url: https://api.tavily.com
